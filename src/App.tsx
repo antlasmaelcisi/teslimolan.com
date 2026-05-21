@@ -2377,12 +2377,14 @@ export default function App() {
       <VibrantWallpaper />
 
       {/* Viewport-level Scroll Progress Bar */}
-      <motion.div 
-        className={`fixed left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 origin-left z-[99] transition-all duration-300 ${
-          isHeaderVisible ? 'top-[64px]' : 'top-0'
-        }`}
-        style={{ scaleX: scrollYProgress }}
-      />
+      {viewingBlog && !editingBlog && (
+        <motion.div 
+          className={`fixed left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 origin-left z-[99] transition-all duration-300 ${
+            isHeaderVisible ? 'top-[64px]' : 'top-0'
+          }`}
+          style={{ scaleX: scrollYProgress }}
+        />
+      )}
       
       {/* Notification Toast */}
       <AnimatePresence>
