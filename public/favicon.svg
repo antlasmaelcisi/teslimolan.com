@@ -1,28 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none">
-  <defs>
-    <!-- Same gorgeous gradient used in the Scroll Progress Bar -->
-    <linearGradient id="favicon-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="50%" stop-color="#6366f1" />
-      <stop offset="100%" stop-color="#9333ea" />
-    </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="1.5" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-  </defs>
-
-  <!-- Clean outer boundary with soft ambient circular gradient backdrop -->
-  <circle cx="16" cy="16" r="14" fill="url(#favicon-grad)" fill-opacity="0.08" stroke="url(#favicon-grad)" stroke-width="1.2" opacity="0.8"/>
-
-  <!-- Elegant floating fluid curve indicating peace, surrender, and flow (teslimiyet/trust) -->
-  <path d="M9 16.5 C 10.5 13.5, 13.5 11, 16 11 C 18.5 11, 21.5 13, 23 15.5 C 21.5 18.5, 18.5 21, 16 21 C 13.5 21, 10.5 19, 9 16.5 Z" 
-        stroke="url(#favicon-grad)" 
-        stroke-width="2.5" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"
-  />
-
-  <!-- Energetic center glowing core node -->
-  <circle cx="16" cy="16" r="3.5" fill="url(#favicon-grad)" filter="url(#glow)" />
+<svg width="632" height="592" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="361" y="78" width="247" height="437" fill="white"/>
+<path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" fill="#1F7144"/>
+<rect x="342" y="515" width="285" height="19" rx="9.5" fill="#1F7144"/>
+<rect x="342" y="59" width="285" height="19" rx="9.5" fill="#1F7144"/>
+<rect x="475" y="116" width="95" height="57" fill="#1F7144"/>
+<rect x="475" y="268" width="95" height="57" fill="#1F7144"/>
+<rect x="475" y="420" width="95" height="57" fill="#1F7144"/>
+<rect x="475" y="344" width="95" height="57" fill="#1F7144"/>
+<rect x="475" y="192" width="95" height="57" fill="#1F7144"/>
+<path d="M361 116H456V173H361V116Z" fill="#1F7144"/>
+<rect x="361" y="420" width="95" height="57" fill="#1F7144"/>
+<path d="M608 68.5C608 63.2533 612.253 59 617.5 59C622.747 59 627 63.2533 627 68.5V524.5C627 529.747 622.747 534 617.5 534C612.253 534 608 529.747 608 524.5V68.5Z" fill="#1F7144"/>
+<rect x="266" y="173" width="190" height="247" fill="white"/>
+<ellipse cx="202" cy="360.5" rx="25" ry="28.5" fill="white"/>
+<ellipse cx="202" cy="232.5" rx="25" ry="28.5" fill="white"/>
+<path d="M114 282L266 268V325L114 311V282Z" fill="white"/>
+<path d="M329.234 192V401H289.223V226.505H266V192H329.234Z" fill="#1F7144"/>
+<path d="M386.33 192H420.466C444.155 192 456 204.049 456 228.148V364.524C456 388.841 444.155 401 420.466 401H388.009C364.32 401 352.475 388.841 352.475 364.524V337.577H391.367V358.28C391.367 363.757 393.885 366.495 398.921 366.495H409.554C414.403 366.495 416.828 363.757 416.828 358.28V318.517H386.33C362.641 318.517 350.796 306.468 350.796 282.369V228.148C350.796 204.049 362.641 192 386.33 192ZM397.522 286.313H416.828V234.72C416.828 229.243 414.403 226.505 409.554 226.505H397.522C392.486 226.505 389.968 229.243 389.968 234.72V278.097C389.968 281.165 390.527 283.355 391.647 284.67C392.766 285.765 394.724 286.313 397.522 286.313Z" fill="#1F7144"/>
 </svg>
