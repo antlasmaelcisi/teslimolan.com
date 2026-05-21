@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isEmailVerified() && 
+             (request.auth.token.email.lower() == 'antlasmaelcisi@gmail.com' || exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+    function isValidAdmin(admin) {
+      return admin.keys().hasAll(['email']) && 
+             admin.keys().size() == 1 &&
+             admin.email is string && admin.email.size() <= 256;
+    }
+
+    function isValidBlog(blog) {
+      // Required fields: title, content, status, createdAt, updatedAt
+      return blog.keys().hasAll(['title', 'content', 'status', 'createdAt', 'updatedAt']) &&
+             blog.title is string && blog.title.size() <= 500 &&
+             blog.content is string && blog.content.size() <= 1048576 && // 1MB limit
+             blog.status in ['draft', 'published'] &&
+             (blog.createdAt is timestamp || blog.createdAt is string) &&
+             (blog.updatedAt is timestamp || blog.updatedAt is string);
+    }
+
+    // --- Collections ---
+
+    // Admins Collection
+    match /admins/{email} {
+      // Only allow getting IF it's the user's own admin status they are checking
+      // Or if the requester is already an admin (though not needed for current app flow)
+      allow get: if isEmailVerified() && (request.auth.token.email.lower() == email.lower() || isAdmin());
+      
+      // Creating/Deleting admins: only existing admins can do this
+      // For initial setup, the user will use the console
+      allow create, update, delete: if isAdmin() && isValidAdmin(incoming());
+    }
+
+    // Blogs Collection
+    match /blogs/{blogId} {
+      // Validation on writes - only admins can write
+      allow create: if isAdmin() && isValidId(blogId) && isValidBlog(incoming()) && 
+                    // Allow either server timestamp or a valid provided timestamp (for renames/clones)
+                    (incoming().createdAt == request.time || incoming().createdAt is timestamp) &&
+                    incoming().updatedAt == request.time;
+      
+      allow update: if isAdmin() && isValidId(blogId) && isValidBlog(incoming()) &&
+                    // Enforce immutability of createdAt
+                    incoming().createdAt == existing().createdAt &&
+                    (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
+      
+      allow delete: if isAdmin() && isValidId(blogId);
+
+      // Read rules
+      allow get: if isValidId(blogId) && (isAdmin() || existing().status == 'published');
+      
+      // Secure list query
+      allow list: if isAdmin() || (resource != null && resource.data.status == 'published');
+    }
+  }
+}

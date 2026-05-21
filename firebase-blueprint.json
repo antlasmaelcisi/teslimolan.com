@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized admin users",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    },
+    "Blog": {
+      "title": "Blog",
+      "description": "A blog post article",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string", "description": "JSON string of blocks" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "authorEmail": { "type": "string" }
+      },
+      "required": ["title", "content", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "admins/{email}": {
+      "schema": "Admin",
+      "description": "Authorized admin emails"
+    },
+    "blogs/{blogId}": {
+      "schema": "Blog",
+      "description": "Collection of blog posts"
+    }
+  }
+}

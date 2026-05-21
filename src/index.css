@@ -1,0 +1,326 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+::selection {
+  background-color: rgba(0, 122, 255, 0.2);
+  color: inherit;
+}
+
+@theme {
+  --font-sans: "Google Sans", "Product Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Google Sans", "Product Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  --theme-text-color: #1d1d1f;
+  @apply bg-[#f5f5f7] text-[#1d1d1f] font-sans text-[14px] antialiased;
+  cursor: url('/custom-cursor.svg') 0 0, auto;
+}
+
+/* Make sure all block elements inherit the cursor */
+div, main, section, nav, header, footer, article, aside, p, span, h1, h2, h3, h4, h5, h6 {
+  cursor: url('/custom-cursor.svg') 0 0, auto;
+}
+
+/* Ensure interactive elements AND their children always use the mickey cursor */
+a, button, [role="button"], input[type="submit"], input[type="button"], input[type="reset"], .cursor-pointer,
+a *, button *, [role="button"] *, input[type="submit"] *, input[type="button"] *, input[type="reset"] *, .cursor-pointer * {
+  cursor: url('/mickey-cursor.svg') 16 2, pointer !important;
+}
+
+[contenteditable], input[type="text"], input[type="password"], input[type="email"], input[type="number"], textarea, .cursor-text {
+  cursor: url('/custom-cursor.svg') 0 0, text !important;
+}
+
+[contenteditable] {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+span[style*="color: rgb(0, 0, 1)"],
+span[style*="color: #000001"],
+font[color="#000001"],
+span[style*="color: rgb(0, 0, 0)"],
+span[style*="color: #000000;"],
+span[style$="color: #000000"],
+span[style*="color:#000000;"],
+span[style$="color:#000000"],
+font[color="#000000"] {
+  color: var(--theme-text-color) !important;
+}
+
+.theme-text-white {
+  --theme-text-color: #ffffff;
+}
+
+.theme-text-gray {
+  --theme-text-color: #111827;
+}
+
+.theme-text-accent {
+  --theme-text-color: #1e3a8a;
+}
+
+.blogger-card {
+  @apply bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)];
+}
+
+.blogger-btn-primary {
+  @apply bg-[#007aff] hover:bg-[#0062cc] text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 shadow-sm active:scale-[0.98];
+}
+
+.blogger-btn-secondary {
+  @apply bg-white/50 backdrop-blur-sm border border-gray-200 hover:bg-gray-100/80 text-[#1d1d1f] font-medium py-2 px-6 rounded-lg transition-all duration-300 active:scale-[0.98];
+}
+
+.apple-glass {
+  @apply bg-white/40 backdrop-blur-2xl border border-white/20;
+}
+
+.apple-shadow {
+  @apply shadow-[0_8px_32px_rgba(0,0,0,0.08)];
+}
+
+.apple-card {
+  @apply bg-white rounded-2xl border border-gray-200/50 shadow-[0_2px_10px_rgba(0,0,0,0.04)];
+}
+
+.sites-section-white { @apply bg-white; }
+.sites-section-gray { @apply bg-[#f8f9fa]; }
+.sites-section-accent { @apply bg-[#e8f0fe]; }
+
+.sites-hero-title {
+  @apply text-5xl font-bold font-sans text-white drop-shadow-lg;
+}
+
+.sites-heading {
+  @apply text-3xl font-bold font-sans text-[#202124] tracking-tight;
+}
+
+.sites-divider {
+  @apply h-px bg-gray-200 w-full my-8;
+}
+
+.text-justify {
+  text-align: justify;
+}
+
+.markdown-body h1 { @apply text-3xl font-bold mb-4; }
+.markdown-body h2 { @apply text-2xl font-bold mb-3; }
+.markdown-body p { @apply mb-4 leading-relaxed; }
+.markdown-body ul { @apply list-disc ml-6 mb-4; }
+
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: #D1D5DB;
+  cursor: text;
+}
+
+.sites-button {
+  @apply text-white font-medium py-2 px-3 md:px-6 rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2 shadow-sm text-center min-w-0 md:min-w-[120px] active:scale-[0.98] hover:brightness-110 active:brightness-90;
+  text-decoration: none !important;
+  font-size: 12pt;
+}
+
+.sites-button-small {
+  @apply text-white px-3 py-1.5 rounded-md transition-all duration-200 inline-flex items-center justify-center shadow-sm gap-2 whitespace-nowrap font-medium active:scale-[0.98] hover:brightness-110 active:brightness-90;
+  min-width: 0;
+  @apply md:min-w-[48px];
+  height: 32px;
+  font-size: 12pt;
+}
+
+@media (max-width: 767px) {
+  .sites-button-small {
+    width: 32px !important;
+    padding: 0 !important;
+    aspect-ratio: 1 / 1;
+  }
+}
+
+.sites-button-side {
+  @apply md:w-[180px] md:min-w-[180px];
+}
+
+@media (max-width: 767px) {
+  .sites-button-side {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Allow dragging in contentEditable */
+[contenteditable] .sites-button {
+  -webkit-user-drag: element;
+}
+
+.sites-button:focus {
+  outline: 2px solid #4285f4;
+  outline-offset: 2px;
+}
+
+.button-container {
+  position: relative;
+  transition: background-color 0.2s;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.button-container:hover {
+  background-color: rgba(66, 133, 244, 0.05);
+  outline: 1px dashed rgba(66, 133, 244, 0.3);
+}
+
+[contenteditable] .button-container {
+  cursor: default;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Apple Style Icons - Realistic macOS Big Sur/Monterey Style */
+.apple-icon-container {
+  @apply flex items-center justify-center text-white relative overflow-hidden transition-all duration-300;
+  border-radius: 22.5%;
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.1),
+    0 2px 4px rgba(0,0,0,0.1),
+    0 4px 8px rgba(0,0,0,0.1),
+    inset 0 -1px 2px rgba(0,0,0,0.2),
+    inset 0 1px 2px rgba(255,255,255,0.4);
+}
+
+/* Glass highlight */
+.apple-icon-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Inner border */
+.apple-icon-container::before {
+  content: "";
+  position: absolute;
+  inset: 0.5px;
+  border-radius: inherit;
+  border: 0.5px solid rgba(255,255,255,0.15);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.apple-icon-container:hover,
+button:hover .apple-icon-container {
+  box-shadow: 
+    0 2px 4px rgba(0,0,0,0.1),
+    0 8px 16px rgba(0,0,0,0.15),
+    inset 0 -1px 2px rgba(0,0,0,0.2),
+    inset 0 1px 2px rgba(255,255,255,0.5);
+}
+
+/* Standalone icon hover translation - Removed as per user request */
+.apple-icon-container:hover {
+  @apply translate-y-0;
+}
+
+/* If it's in a group that already translates, prevent double translation on the icon itself */
+button:hover .apple-icon-container,
+.apple-icon-container.no-hover:hover {
+  @apply translate-y-0;
+}
+
+.apple-icon-container.no-hover:hover {
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.1),
+    0 2px 4px rgba(0,0,0,0.1),
+    0 4px 8px rgba(0,0,0,0.1),
+    inset 0 -1px 2px rgba(0,0,0,0.2),
+    inset 0 1px 2px rgba(255,255,255,0.4);
+}
+
+.apple-sidebar-btn {
+  @apply transition-all duration-300;
+}
+
+.apple-sidebar-btn:hover {
+  @apply translate-y-0;
+}
+
+.apple-icon-container svg {
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+  position: relative;
+  z-index: 2;
+}
+
+/* macOS Style Tooltip */
+.apple-tooltip {
+  @apply absolute left-full px-2.5 py-1.5 bg-black/75 backdrop-blur-md text-white text-[11px] font-medium rounded-lg opacity-0 pointer-events-none transition-all duration-200 whitespace-nowrap z-[100] shadow-xl border border-white/10 top-1/2;
+  transform: translate(-4px, -50%) scale(0.95);
+}
+
+button:hover .apple-tooltip {
+  @apply opacity-100;
+  transform: translate(0, -50%) scale(1);
+}
+
+/* Vibrant macOS Gradients - More complex for realism */
+.apple-icon-blue { background: linear-gradient(180deg, #5AC8FA 0%, #007AFF 100%); }
+.apple-icon-green { background: linear-gradient(180deg, #4CD964 0%, #28CD41 100%); }
+.apple-icon-red { background: linear-gradient(180deg, #FF3B30 0%, #D70015 100%); }
+.apple-icon-orange { background: linear-gradient(180deg, #FF9500 0%, #FF8000 100%); }
+.apple-icon-purple { background: linear-gradient(180deg, #AF52DE 0%, #8944AB 100%); }
+.apple-icon-pink { background: linear-gradient(180deg, #ff00ff 0%, #b300b3 100%); }
+.apple-icon-teal { background: linear-gradient(180deg, #5AC8FA 0%, #00AEEF 100%); }
+.apple-icon-table { background: linear-gradient(180deg, #217748 0%, #1f7144 100%); }
+.apple-icon-terminal { background: linear-gradient(180deg, #FFCC00 0%, #FFB300 100%); }
+.apple-icon-split { background: linear-gradient(180deg, #FC3E59 0%, #F81E3D 100%); }
+.apple-icon-indigo { background: linear-gradient(180deg, #5856D6 0%, #3634A3 100%); }
+.apple-icon-yellow { background: linear-gradient(180deg, #FFCC00 0%, #FFB300 100%); }
+.apple-icon-gray { background: linear-gradient(180deg, #8E8E93 0%, #636366 100%); }
+/* Rainbow Glow Animation */
+@keyframes apple-rainbow-glow {
+  0% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3); }
+  16% { box-shadow: 0 0 10px rgba(255, 127, 0, 0.6), 0 0 20px rgba(255, 127, 0, 0.3); }
+  33% { box-shadow: 0 0 10px rgba(255, 255, 0, 0.6), 0 0 20px rgba(255, 255, 0, 0.3); }
+  50% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.3); }
+  66% { box-shadow: 0 0 10px rgba(0, 0, 255, 0.6), 0 0 20px rgba(0, 0, 255, 0.3); }
+  83% { box-shadow: 0 0 10px rgba(75, 0, 130, 0.6), 0 0 20px rgba(75, 0, 130, 0.3); }
+  100% { box-shadow: 0 0 10px rgba(139, 0, 255, 0.6), 0 0 20px rgba(139, 0, 255, 0.3); }
+}
+
+.apple-rainbow-hover:hover .apple-icon-container {
+  animation: apple-rainbow-glow 3s linear infinite !important;
+  transform: scale(1.05);
+}
+
+.apple-rainbow-glow:hover {
+  animation: apple-rainbow-glow 3s linear infinite !important;
+}
+
+.apple-icon-ghost { 
+  background: transparent; 
+  @apply text-gray-500; 
+  box-shadow: none !important;
+}
+.apple-icon-ghost::after, .apple-icon-ghost::before { display: none; }
+.apple-icon-ghost:hover,
+button:hover .apple-icon-ghost { @apply bg-gray-100 text-gray-800; }
+
