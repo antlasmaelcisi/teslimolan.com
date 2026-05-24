@@ -139,11 +139,26 @@ const slugify = (text: string) => {
     .replace(/^-+|-+$/g, '');
 };
 
+// Recursively remove undefined values from an object
+const removeUndefined = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(removeUndefined);
+  const newObj: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      newObj[key] = removeUndefined(obj[key]);
+    }
+  }
+  return newObj;
+};
+
 export const saveBlog = async (id: string | null, data: any) => {
-  const blogData = {
+  const blogData = removeUndefined({
     ...data,
+    authorEmail: data.authorEmail || auth.currentUser?.email,
     updatedAt: serverTimestamp(),
-  };
+  });
+  console.log("Saving blog:", { id, blogData });
 
   try {
     if (id) {
