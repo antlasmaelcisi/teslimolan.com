@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 ::selection {
@@ -7,8 +6,8 @@
 }
 
 @theme {
-  --font-sans: "Google Sans", "Product Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: "Google Sans", "Product Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+  --font-display: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
 }
 
 *, *::before, *::after {
@@ -147,14 +146,30 @@ font[color="#000000"] {
 }
 
 .sites-button-side {
-  @apply md:w-[180px] md:min-w-[180px];
+  width: 170px !important;
+  min-width: 170px !important;
+  max-width: 170px !important;
 }
 
 @media (max-width: 767px) {
   .sites-button-side {
     width: auto !important;
     min-width: 0 !important;
+    max-width: none !important;
   }
+}
+
+/* Ensure table cells wrap content properly, especially long consecutive numbers */
+table td, table th {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+}
+
+/* Fallback/explicit equal width of columns under fixed table layout */
+table.table-fixed {
+  table-layout: fixed !important;
+  width: 100% !important;
 }
 
 /* Allow dragging in contentEditable */
@@ -323,4 +338,16 @@ button:hover .apple-tooltip {
 .apple-icon-ghost::after, .apple-icon-ghost::before { display: none; }
 .apple-icon-ghost:hover,
 button:hover .apple-icon-ghost { @apply bg-gray-100 text-gray-800; }
+
+/* Enforce uniform font size inside table cells to override nested HTML styling from imported content */
+table td span,
+table td font,
+table td p,
+table td div,
+table td code,
+table td strong,
+table td em {
+  font-size: inherit !important;
+}
+
 

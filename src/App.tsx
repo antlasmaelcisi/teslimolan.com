@@ -121,6 +121,139 @@ const fixDriveLink = (url: string) => {
 };
 
 // Helper to get the first hero or image block's URL for display
+const unwrapElement = (el: Element) => {
+  const parent = el.parentNode;
+  if (!parent) return;
+  while (el.firstChild) {
+    parent.insertBefore(el.firstChild, el);
+  }
+  parent.removeChild(el);
+};
+
+const applyFormattingToHtml = (html: string, command: string, value: string = '') => {
+  let content = html;
+  if (!content || content.trim() === '' || content === 'Metin yazmak için çift tıklayın...') {
+    content = '';
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content || '<div></div>', 'text/html');
+    
+    // Proactive cleanup of empty and redundant styling spans
+    doc.body.querySelectorAll('span').forEach(span => {
+      if (!span.getAttribute('style') || span.getAttribute('style').trim() === '') {
+        unwrapElement(span);
+        return;
+      }
+      
+      const parent = span.parentElement;
+      if (parent && parent.tagName.toLowerCase() === 'span') {
+        const parentColor = parent.style.color;
+        const myColor = span.style.color;
+        if (parentColor && myColor && parentColor.toLowerCase().replace(/\s/g, '') === myColor.toLowerCase().replace(/\s/g, '')) {
+          unwrapElement(span);
+        }
+      }
+    });
+
+    // Determine the root text-holding wrapper (like a div, p, or span from sheet import / typography styling)
+    const bodyChildren = Array.from(doc.body.childNodes).filter(node => {
+      if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
+        return false;
+      }
+      return true;
+    });
+
+    let targetContainer: HTMLElement = doc.body;
+    let isWrapped = false;
+
+    if (bodyChildren.length === 1 && bodyChildren[0].nodeType === Node.ELEMENT_NODE) {
+      const element = bodyChildren[0] as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+      if (tagName === 'div' || tagName === 'p' || tagName === 'span') {
+        targetContainer = element;
+        isWrapped = true;
+      }
+    }
+    
+    if (command === 'bold') {
+      const bTags = targetContainer.querySelectorAll('b, strong');
+      const hasFontWeightBold = targetContainer.style.fontWeight === 'bold' || targetContainer.style.fontWeight === '700';
+      
+      if (bTags.length > 0 || hasFontWeightBold) {
+        bTags.forEach(unwrapElement);
+        targetContainer.style.fontWeight = '';
+        targetContainer.querySelectorAll('*').forEach(el => {
+          if (el instanceof HTMLElement) el.style.fontWeight = '';
+        });
+      } else {
+        targetContainer.innerHTML = `<b>${targetContainer.innerHTML}</b>`;
+      }
+      return doc.body.innerHTML;
+    }
+
+    if (command === 'italic') {
+      const italicTags = targetContainer.querySelectorAll('i, em');
+      const hasItalicStyle = targetContainer.style.fontStyle === 'italic';
+      
+      if (italicTags.length > 0 || hasItalicStyle) {
+        italicTags.forEach(unwrapElement);
+        targetContainer.style.fontStyle = '';
+        targetContainer.querySelectorAll('*').forEach(el => {
+          if (el instanceof HTMLElement) el.style.fontStyle = '';
+        });
+      } else {
+        targetContainer.innerHTML = `<i>${targetContainer.innerHTML}</i>`;
+      }
+      return doc.body.innerHTML;
+    }
+
+    if (command === 'underline') {
+      const uTags = targetContainer.querySelectorAll('u');
+      const hasUnderlineStyle = targetContainer.style.textDecoration.includes('underline');
+      
+      if (uTags.length > 0 || hasUnderlineStyle) {
+        uTags.forEach(unwrapElement);
+        targetContainer.style.textDecoration = '';
+        targetContainer.querySelectorAll('*').forEach(el => {
+          if (el instanceof HTMLElement) el.style.textDecoration = '';
+        });
+      } else {
+        targetContainer.innerHTML = `<u>${targetContainer.innerHTML}</u>`;
+      }
+      return doc.body.innerHTML;
+    }
+
+    if (command === 'foreColor') {
+      const finalColor = value || '#000000';
+      
+      targetContainer.querySelectorAll('*').forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.color = '';
+        }
+      });
+      
+      if (isWrapped) {
+        targetContainer.style.color = finalColor;
+      } else {
+        doc.body.innerHTML = `<span style="color: ${finalColor};">${doc.body.innerHTML}</span>`;
+      }
+      return doc.body.innerHTML;
+    }
+  } catch (error) {
+    console.error("DOMParser formatting error:", error);
+  }
+
+  return content;
+};
+
+const getTableCellAlignment = (cellHtml: string) => {
+  if (!cellHtml || cellHtml === 'Metin yazmak için çift tıklayın...') return 'left';
+  const match = cellHtml.match(/text-align:\s*(left|center|right|justify)/i);
+  return match ? (match[1].toLowerCase() as 'left' | 'center' | 'right' | 'justify') : 'left';
+};
+
 const getBlogDisplayImage = (blog: Blog) => {
   try {
     const blocks = JSON.parse(blog.content);
@@ -201,10 +334,10 @@ const HeroImage = ({ src, viewMode }: { src: string, viewMode: 'read' | 'edit' }
 
 const getButtonColorClass = (iconName?: string) => {
   switch (iconName) {
-    case 'copy': return "apple-icon-green";
+    case 'copy': return "apple-icon-split";
     case 'table': return "apple-icon-blue";
     case 'terminal': return "apple-icon-terminal";
-    case 'split': return "apple-icon-split";
+    case 'split': return "apple-icon-green";
     default: return "apple-icon-blue";
   }
 };
@@ -838,7 +971,7 @@ export default function App() {
       content: type === 'heading' ? 'Başlık Yazın' : (type === 'hero' ? 'Büyük Başlık' : (type === 'table' ? '' : (type === 'note' ? '' : 'Metin yazmak için tıklayın...'))),
       link: type === 'button' ? 'https://' : undefined,
       alignment: type === 'hero' ? 'center' : (['text', 'note', 'heading'].includes(type) ? 'justify' : 'left'),
-      textColor: lastSelectedColor,
+      textColor: type === 'table' ? '' : lastSelectedColor,
       hasButton: type === 'button',
       notes: type === 'note' ? [{ text: 'Metin yazmak için tıklayın...', alignment: 'justify' }] : [],
       buttonText: 'İncele',
@@ -898,34 +1031,7 @@ export default function App() {
       const block = blocks.find(b => b.id === activeBlockId);
       if (block?.type === 'table' || block?.data) {
         updateSelectedTableCells((content) => {
-          if (command === 'bold') {
-            const isCurrentlyBold = content.includes('<b>') || content.includes('<strong>');
-            if (isCurrentlyBold) {
-              return content.replace(/<\/?(b|strong)>/g, '');
-            }
-            return `<b>${content}</b>`;
-          }
-          if (command === 'italic') {
-            const isCurrentlyItalic = content.includes('<i>') || content.includes('<em>');
-            if (isCurrentlyItalic) {
-              return content.replace(/<\/?(i|em)>/g, '');
-            }
-            return `<i>${content}</i>`;
-          }
-          if (command === 'underline') {
-            const isCurrentlyUnderlined = content.includes('<u>');
-            if (isCurrentlyUnderlined) {
-              return content.replace(/<\/?u>/g, '');
-            }
-            return `<u>${content}</u>`;
-          }
-          if (command === 'foreColor') {
-            if (value === '#000001') {
-              return `<span style="color: #000001">${content}</span>`;
-            }
-            return `<span style="color: ${value}">${content}</span>`;
-          }
-          return content;
+          return applyFormattingToHtml(content, command, value);
         });
         // Update state immediately after command
         setTimeout(() => {
@@ -1022,9 +1128,44 @@ export default function App() {
   };
 
   const applyAlignmentToCell = (html: string, alignment: string) => {
-    // Strip existing alignment wrappers (div or p with text-align)
-    const stripped = html.replace(/<(div|p) style="text-align:\s*(left|center|right|justify);?">(.*?)<\/\1>/gi, '$3');
-    return `<div style="text-align: ${alignment};">${stripped}</div>`;
+    let content = html;
+    if (content === 'Metin yazmak için çift tıklayın...') {
+      content = '';
+    }
+
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content || '<div></div>', 'text/html');
+      
+      const bodyChildren = Array.from(doc.body.childNodes).filter(node => {
+        if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
+          return false;
+        }
+        return true;
+      });
+      
+      if (bodyChildren.length === 1 && bodyChildren[0].nodeType === Node.ELEMENT_NODE) {
+        const element = bodyChildren[0] as HTMLElement;
+        const tagName = element.tagName.toLowerCase();
+        if (tagName === 'div' || tagName === 'p') {
+          element.style.textAlign = alignment;
+          return doc.body.innerHTML;
+        }
+      }
+      
+      doc.body.querySelectorAll('div, p').forEach(el => {
+        if (el instanceof HTMLElement && el.style.textAlign) {
+          const text = el.innerHTML;
+          el.replaceWith(text);
+        }
+      });
+      
+      return `<div style="text-align: ${alignment};">${doc.body.innerHTML}</div>`;
+    } catch (error) {
+      console.error("Error aligning cell:", error);
+    }
+
+    return `<div style="text-align: ${alignment};">${content}</div>`;
   };
 
   const handleImportTableData = (blockId: string) => {
@@ -1041,6 +1182,43 @@ export default function App() {
       const table = doc.querySelector('table');
       
       if (table) {
+        // Parse CSS rules from style tags safely
+        const styleSheetsMap: Record<string, Record<string, string>> = {};
+        const tagStylesMap: Record<string, Record<string, string>> = {};
+        
+        doc.querySelectorAll('style').forEach(styleTag => {
+          const cssText = styleTag.textContent || '';
+          // Extract rules using regex: selector { rules }
+          const ruleRegex = /([^{]+)\{([^}]+)\}/g;
+          let match;
+          while ((match = ruleRegex.exec(cssText)) !== null) {
+            const selector = match[1].trim();
+            const rulesText = match[2].trim();
+            
+            const rules: Record<string, string> = {};
+            rulesText.split(';').forEach(rule => {
+              const parts = rule.split(':');
+              if (parts.length === 2) {
+                const k = parts[0].trim().toLowerCase();
+                if (k === 'font-family') return; // Ignore font-family so that we never override site default
+                const v = parts[1].trim();
+                rules[k] = v;
+              }
+            });
+            
+            if (selector.startsWith('.')) {
+              // Try parsing classes like .s1, .s2, or grouped
+              const classNames = selector.split(',').map(s => s.trim().replace(/^\./, ''));
+              classNames.forEach(cls => {
+                if (cls) styleSheetsMap[cls] = { ...(styleSheetsMap[cls] || {}), ...rules };
+              });
+            } else {
+              const tagName = selector.toLowerCase();
+              tagStylesMap[tagName] = { ...(tagStylesMap[tagName] || {}), ...rules };
+            }
+          }
+        });
+
         // Use table.rows and row.cells to avoid picking up nested table elements via querySelectorAll
         const tableRows = Array.from(table.rows);
         let maxCols = 0;
@@ -1079,22 +1257,89 @@ export default function App() {
             const rowspan = parseInt(td.getAttribute('rowspan') || '1');
             const colspan = parseInt(td.getAttribute('colspan') || '1');
             
+            // Strip any font-family overrides from td and all nested elements so they fall back to the site's default premium typography
+            (td as HTMLElement).querySelectorAll('*').forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              if (htmlEl.style) {
+                htmlEl.style.fontFamily = '';
+              }
+              if (htmlEl.tagName.toLowerCase() === 'font') {
+                htmlEl.removeAttribute('face');
+              }
+            });
+            (td as HTMLElement).style.fontFamily = '';
+
             let content = td.innerHTML;
             const style = (td as HTMLElement).style;
             
             // Extract styles from td
-            const color = style?.color;
-            const backgroundColor = style?.backgroundColor;
-            const fontWeight = style?.fontWeight;
-            const textAlign = style?.textAlign || td.getAttribute('align');
-            const verticalAlign = style?.verticalAlign || td.getAttribute('valign');
-            const fontSize = style?.fontSize;
+            let color = style?.color || '';
+            let backgroundColor = style?.backgroundColor || '';
+            let fontWeight = style?.fontWeight || '';
+            let textAlign = style?.textAlign || td.getAttribute('align') || '';
+            let verticalAlign = style?.verticalAlign || td.getAttribute('valign') || '';
+            let fontSize = style?.fontSize || '';
+            
+            // Fallback to tag styles in parsed stylesheet
+            const tagDefault = tagStylesMap[td.tagName.toLowerCase()];
+            if (tagDefault) {
+              if (!color && tagDefault['color']) color = tagDefault['color'];
+              if (!backgroundColor && tagDefault['background-color']) backgroundColor = tagDefault['background-color'];
+              if (!fontWeight && tagDefault['font-weight']) fontWeight = tagDefault['font-weight'];
+              if (!textAlign && tagDefault['text-align']) textAlign = tagDefault['text-align'];
+              if (!verticalAlign && tagDefault['vertical-align']) verticalAlign = tagDefault['vertical-align'];
+              if (!fontSize && tagDefault['font-size']) fontSize = tagDefault['font-size'];
+            }
+
+            // Fallback to class styles in parsed stylesheet
+            const classes = td.className ? td.className.split(/\s+/) : [];
+            classes.forEach(cls => {
+              const classRule = styleSheetsMap[cls];
+              if (classRule) {
+                if (!color && classRule['color']) color = classRule['color'];
+                if (!backgroundColor && classRule['background-color']) backgroundColor = classRule['background-color'];
+                if (!fontWeight && classRule['font-weight']) fontWeight = classRule['font-weight'];
+                if (!textAlign && classRule['text-align']) textAlign = classRule['text-align'];
+                if (!verticalAlign && classRule['vertical-align']) verticalAlign = classRule['vertical-align'];
+                if (!fontSize && classRule['font-size']) fontSize = classRule['font-size'];
+              }
+            });
+
+            // Check if the resolved text color is a default dark/black representation
+            let isDefaultDarkColor = false;
+            if (color) {
+              const normColor = color.trim().toLowerCase().replace(/\s+/g, '');
+              if (
+                normColor === '' ||
+                normColor === 'inherit' ||
+                normColor === '#000' ||
+                normColor === '#000000' ||
+                normColor === 'black' ||
+                normColor === 'rgb(0,0,0)' ||
+                normColor === 'rgba(0,0,0,1)' ||
+                normColor === 'rgb(17,17,17)' || 
+                normColor === '#111111' ||
+                normColor === '#222222' ||
+                normColor === 'rgb(34,34,34)' ||
+                normColor === '#1d1d1f' ||
+                normColor === 'rgb(29,29,31)' ||
+                normColor === '#000001'
+              ) {
+                isDefaultDarkColor = true;
+                color = '#000000';
+              }
+            } else {
+              isDefaultDarkColor = true;
+            }
             
             const isBold = fontWeight === 'bold' || fontWeight === '700' || td.tagName === 'TH' || td.querySelector('b, strong');
             
             let wrapperStyle = "display: block; width: 100%; min-height: 1.5em;";
-            if (color) wrapperStyle += `color:${color};`;
-            if (backgroundColor && backgroundColor !== 'transparent' && backgroundColor !== 'rgba(0, 0, 0, 0)') {
+            // Default blacks/darks should not output parent wrapper color, letting inner colors cascade/render perfectly
+            if (color && !isDefaultDarkColor) {
+              wrapperStyle += `color:${color};`;
+            }
+            if (backgroundColor && backgroundColor !== 'transparent' && backgroundColor !== 'rgba(0,0,0,0)' && backgroundColor !== 'rgba(0, 0, 0, 0)') {
               // Negative margin trick to cover td padding
               wrapperStyle += `background-color:${backgroundColor}; margin: -0.75rem -1rem; padding: 0.75rem 1rem;`;
             }
@@ -1371,7 +1616,7 @@ export default function App() {
                         e.preventDefault(); e.stopPropagation();
                         // Color normalization for browser compatibility
                         let finalColor = color;
-                        if (color === '') finalColor = '#000001';
+                        if (color === '') finalColor = '#000000';
                         
                         setLastSelectedColor(color);
                         execCommand('foreColor', finalColor); 
@@ -1379,7 +1624,7 @@ export default function App() {
                       }}
                       className="w-5 h-5 rounded-full border border-gray-100 hover:scale-110 active:scale-90 transition-all flex items-center justify-center overflow-hidden shadow-sm"
                       style={{ backgroundColor: color === '' ? '#000000' : color }}
-                      title={color === '' ? 'Varsayılan' : (color === '#A9A9A9' ? 'Koyu Gri' : color)}
+                      title={color === '' ? 'Varsayılan (#000000)' : (color === '#A9A9A9' ? 'Koyu Gri (#A9A9A9)' : color)}
                     >
                       {color === '' && <span className="text-[8px] font-bold text-white">V</span>}
                       {color === '#A9A9A9' && <span className="text-[8px] font-bold text-white">G</span>}
@@ -1565,14 +1810,14 @@ export default function App() {
     if (!block.data) return null;
     return (
       <div className="relative group/table-wrapper" onClick={(e) => e.stopPropagation()}>
-        <div className="w-full overflow-x-auto">
-          <table className={`w-full table-fixed border-collapse border border-gray-300 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} shadow-sm text-[12pt]`}>
+        <div className="w-full overflow-x-auto scrollbar-thin rounded-xl">
+          <table className={`min-w-full table-fixed border-collapse border border-gray-300 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} shadow-sm text-[12pt] font-sans`}>
           <thead>
             <tr className="bg-gray-100">
               {(block.data.rows[0]?.cells || []).map((_, idx) => (
                 <th 
                   key={`label-${idx}`} 
-                  className={`border border-gray-300 py-1 text-center text-[10px] font-bold text-blue-500 bg-blue-50/30 relative cursor-pointer hover:bg-blue-100/50 transition-colors ${activeBlockId === block.id && selectedCells.some(c => c.cellIdx === idx) ? 'bg-blue-100/80 shadow-inner' : ''}`}
+                  className={`border border-gray-300 py-1 text-center text-[10px] font-bold text-blue-500 bg-blue-50/30 relative cursor-pointer hover:bg-blue-100/50 transition-colors ${activeBlockId === block.id && selectedCells.some(c => c.cellIdx === idx) ? 'bg-blue-100/80 shadow-inner' : ''} font-sans`}
                   style={{ width: block.data?.columnWidths?.[idx] }}
                   onMouseDown={() => {
                     setActiveBlockId(block.id);
@@ -1581,7 +1826,7 @@ export default function App() {
                     setStartCell(null);
                   }}
                 >
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 font-sans">
                     {idx === 0 && activeBlockId === block.id && selectedCells.some(c => c.cellIdx === 0) && (
                       <div className="flex gap-1">
                         <button
@@ -1644,7 +1889,7 @@ export default function App() {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="font-sans">
             {block.data.rows.map((row, rowIdx) => (
               <tr key={rowIdx} className="hover:bg-gray-50/50 transition-colors relative group/tr">
                 {row.cells.map((cell, cellIdx) => {
@@ -1660,7 +1905,7 @@ export default function App() {
                           key={cellIdx} 
                           rowSpan={merged.endRow - merged.startRow + 1} 
                           colSpan={merged.endCol - merged.startCol + 1}
-                          className={`border border-gray-300 px-4 py-3 text-gray-600 break-words relative overflow-hidden ${activeBlockId === block.id && selectedCells.some(c => c.rowIdx === rowIdx && c.cellIdx === cellIdx) ? 'bg-blue-100' : ''}`}
+                          className={`border border-gray-300 px-4 py-3 text-[#000000] font-sans relative overflow-hidden ${activeBlockId === block.id && selectedCells.some(c => c.rowIdx === rowIdx && c.cellIdx === cellIdx) ? 'bg-blue-100' : ''}`}
                           style={block.data?.cellStyles?.[`${rowIdx}-${cellIdx}`]}
                           onMouseDown={(e) => {
                             if (activeBlockId === block.id && editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx) return;
@@ -1690,8 +1935,8 @@ export default function App() {
                           html={cell === 'Metin yazmak için çift tıklayın...' ? '' : cell}
                           onChange={(html) => updateTableCell(block.id, rowIdx, cellIdx, html)}
                           placeholder="Metin yazmak için çift tıklayın..."
-                          className={`w-full bg-transparent border-none focus:outline-none p-0 min-h-[1.5em] break-words text-justify ${editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx ? 'cursor-text' : 'cursor-default select-none pointer-events-none'}`}
-                          style={{ color: block.textColor, fontSize: '12pt' }}
+                          className={`w-full bg-transparent border-none focus:outline-none p-0 min-h-[1.5em] font-sans text-${getTableCellAlignment(cell)} ${editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx ? 'cursor-text' : 'cursor-default select-none pointer-events-none'}`}
+                          style={{ color: block.textColor || '#000000', fontSize: '12pt' }}
                           onFocus={() => {
                             setActiveBlockId(block.id);
                             setEditingCell({rowIdx, cellIdx});
@@ -1711,7 +1956,7 @@ export default function App() {
                   return (
                     <td 
                       key={cellIdx} 
-                      className={`border border-gray-300 px-4 py-3 text-gray-600 break-words relative overflow-hidden ${activeBlockId === block.id && selectedCells.some(c => c.rowIdx === rowIdx && c.cellIdx === cellIdx) ? 'bg-blue-100' : ''}`}
+                      className={`border border-gray-300 px-4 py-3 text-[#000000] font-sans relative overflow-hidden ${activeBlockId === block.id && selectedCells.some(c => c.rowIdx === rowIdx && c.cellIdx === cellIdx) ? 'bg-blue-100' : ''}`}
                       style={block.data?.cellStyles?.[`${rowIdx}-${cellIdx}`]}
                       onMouseDown={(e) => {
                         if (activeBlockId === block.id && editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx) return;
@@ -1741,8 +1986,8 @@ export default function App() {
                         html={cell === 'Metin yazmak için çift tıklayın...' ? '' : cell}
                         onChange={(html) => updateTableCell(block.id, rowIdx, cellIdx, html)}
                         placeholder="Metin yazmak için çift tıklayın..."
-                        className={`w-full bg-transparent border-none focus:outline-none p-0 min-h-[1.5em] break-words text-justify ${editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx ? 'cursor-text' : 'cursor-default select-none pointer-events-none'}`}
-                        style={{ color: block.textColor, fontSize: '12pt' }}
+                        className={`w-full bg-transparent border-none focus:outline-none p-0 min-h-[1.5em] font-sans text-${getTableCellAlignment(cell)} ${editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx ? 'cursor-text' : 'cursor-default select-none pointer-events-none'}`}
+                        style={{ color: block.textColor || '#000000', fontSize: '12pt' }}
                         onFocus={() => {
                           setActiveBlockId(block.id);
                           setEditingCell({rowIdx, cellIdx});
@@ -1864,14 +2109,14 @@ export default function App() {
     const colCount = block.data.rows[0]?.cells.length || 0;
 
     return (
-      <div className="w-full overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
-        <table className={`w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} text-[12pt]`}>
+      <div className="w-full overflow-x-auto rounded-2xl border border-gray-200 shadow-sm scrollbar-thin">
+        <table className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} text-[12pt] font-sans`}>
           <colgroup>
             {Array.from({ length: colCount }).map((_, idx) => (
               <col key={idx} style={{ width: block.data?.columnWidths?.[idx] }} />
             ))}
           </colgroup>
-          <tbody>
+          <tbody className="font-sans">
             {block.data.rows.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {row.cells.map((cell, colIndex) => {
@@ -1889,7 +2134,7 @@ export default function App() {
                           key={colIndex}
                           rowSpan={merged.endRow - merged.startRow + 1} 
                           colSpan={merged.endCol - merged.startCol + 1}
-                          className={`border-gray-200 p-3 min-w-[100px] text-gray-700 text-justify ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
+                          className={`border-gray-200 p-3 min-w-[100px] text-[#000000] text-justify font-sans ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
                           style={block.data?.cellStyles?.[`${rowIndex}-${colIndex}`]}
                           dangerouslySetInnerHTML={{ __html: cell }}
                         />
@@ -1903,7 +2148,7 @@ export default function App() {
                   return (
                     <td 
                       key={colIndex}
-                      className={`border-gray-200 p-3 min-w-[100px] text-gray-700 text-justify ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
+                      className={`border-gray-200 p-3 min-w-[100px] text-[#000000] text-justify font-sans ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
                       style={block.data?.cellStyles?.[`${rowIndex}-${colIndex}`]}
                       dangerouslySetInnerHTML={{ __html: cell }}
                     />
@@ -2275,7 +2520,7 @@ export default function App() {
             <div key={block.id} className={`${bgClass} w-full`}>
               <div className="max-w-4xl mx-auto p-10">
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
-                  <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
+                  <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, (
                       <h2 className={`text-lg font-bold font-sans tracking-tight text-${block.alignment || 'justify'}`} style={{ color: block.textColor }}>{block.content}</h2>
                     ), false)}
@@ -2298,7 +2543,7 @@ export default function App() {
             <div key={block.id} className={`${bgClass} w-full`}>
               <div className={`max-w-4xl mx-auto p-10`}>
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start gap-6 md:gap-10 w-full"}>
-                  <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
+                  <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, (
                       <div className={`flex flex-col gap-6 items-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}`}>
                         <img src={block.imageUrl} className="max-w-full rounded-2xl apple-shadow border border-white/20" alt="Content" referrerPolicy="no-referrer" />
@@ -2316,7 +2561,7 @@ export default function App() {
             <div key={block.id} className={`${bgClass} w-full border-b border-gray-100/30`}>
               <div className="max-w-4xl mx-auto p-10">
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
-                  <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
+                  <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, renderTextPublic(block), false)}
                   </div>
                   {renderButtonsPublic(block)}
@@ -2339,7 +2584,7 @@ export default function App() {
             <div key={block.id} className={`${bgClass} w-full border-b border-gray-100/30`}>
               <div className="max-w-4xl mx-auto p-10">
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
-                  <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
+                  <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, null, false)}
                   </div>
                   {renderButtonsPublic(block)}
@@ -2352,7 +2597,7 @@ export default function App() {
             <div key={block.id} className={`${bgClass} w-full py-10`}>
               <div className="max-w-4xl mx-auto px-10">
                 <div className={block.buttonPosition === 'bottom' || block.buttonPosition === undefined ? "flex flex-col gap-8" : "flex flex-col md:flex-row items-start justify-between gap-6 md:gap-10"}>
-                  <div className={`flex-1 ${block.buttonPosition === 'right' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
+                  <div className={`flex-1 min-w-0 ${block.buttonPosition === 'right' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, renderTextPublic(block), false)}
                   </div>
                   {renderButtonsPublic(block)}
@@ -2940,7 +3185,7 @@ export default function App() {
 
                                 {block.type === 'heading' && (
                                   <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-4" : "flex items-start justify-between gap-8"}>
-                                    <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
+                                    <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
                                       {renderBlockContent(block, (
                                         <ContentEditable 
                                           html={block.content}
@@ -2963,7 +3208,7 @@ export default function App() {
 
                                 {block.type === 'image' && (
                                   <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-4" : "flex items-start justify-between gap-8"}>
-                                    <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
+                                    <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
                                       {renderBlockContent(block, (
                                         <div className={`flex flex-col items-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')} space-y-[19px]`}>
                                           <div className="relative group/img">
@@ -3064,7 +3309,7 @@ export default function App() {
 
                                 {block.type === 'text' && (
                                   <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-4" : "flex items-start justify-between gap-8"}>
-                                    <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
+                                    <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
                                       {renderBlockContent(block, renderTextEditor(block), true)}
                                     </div>
 
@@ -3074,7 +3319,7 @@ export default function App() {
 
                                 {block.type === 'table' && block.data && (
                                   <div className={block.buttonPosition === 'bottom' || block.buttonPosition === undefined ? "flex flex-col gap-4" : "flex items-start justify-between gap-8"}>
-                                    <div className={`flex-1 ${block.buttonPosition === 'right' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
+                                    <div className={`flex-1 min-w-0 ${block.buttonPosition === 'right' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
                                       {renderBlockContent(block, renderTextEditor(block), true)}
                                     </div>
                                     {renderButtonsEditor(block)}
@@ -3113,7 +3358,7 @@ export default function App() {
 
                                 {block.type === 'note' && (
                                   <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-4" : "flex items-start justify-between gap-8"}>
-                                    <div className={`flex-1 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
+                                    <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'max-w-[630px]' : ''}`}>
                                       {renderBlockContent(block, null, true)}
                                       {(!block.notes || block.notes.length === 0) && (
                                         <div className="text-center py-4 text-gray-400 text-sm italic">
