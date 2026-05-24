@@ -102,7 +102,7 @@ interface Block {
 interface Blog {
   id: string;
   title: string;
-  content: string | any[]; // Store JSON string or Array of blocks
+  content: string; // Will store JSON string of blocks
   status: 'draft' | 'published';
   createdAt: any;
   updatedAt: any;
@@ -893,31 +893,16 @@ export default function App() {
   useEffect(() => {
     if (editingBlog) {
       try {
+        const parsed = JSON.parse(editingBlog.content);
         let finalBlocks = [];
-        if (Array.isArray(editingBlog.content) && editingBlog.content.length > 0) {
-          finalBlocks = editingBlog.content;
-        } else if (typeof editingBlog.content === 'string') {
-          try {
-            const parsed = JSON.parse(editingBlog.content);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              finalBlocks = parsed;
-            } else {
-              throw new Error("Empty or invalid JSON");
-            }
-          } catch {
-            finalBlocks = [{ 
-              id: '1', 
-              type: 'text', 
-              content: editingBlog.content || 'Metin yazmak için tıklayın...',
-              alignment: 'justify' as const
-            }];
-          }
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          finalBlocks = parsed;
         } else {
           // Fallback for empty array or old HTML content
           finalBlocks = [{ 
             id: '1', 
             type: 'text', 
-            content: (typeof editingBlog.content === 'string' ? editingBlog.content : 'Metin yazmak için tıklayın...'),
+            content: editingBlog.content || 'Metin yazmak için tıklayın...',
             alignment: 'justify' as const
           }];
         }
@@ -2379,7 +2364,7 @@ export default function App() {
       
       const payload = {
         title: blogToSave.title || 'Adsız Blog',
-        content: blocks.length > 0 ? blocks : blogToSave.content || [],
+        content: blocks.length > 0 ? JSON.stringify(blocks) : blogToSave.content || '[]',
         status,
         authorEmail: currentUser.email,
         updatedAt: new Date().toISOString()

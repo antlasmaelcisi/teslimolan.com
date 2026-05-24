@@ -11,11 +11,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(blog) {
-      // Allow if authorEmail is missing (legacy) OR if it matches the current user
-      return isSignedIn() && (blog != null && (blog.get('authorEmail', null) == null || blog.get('authorEmail', null) == request.auth.token.email));
-    }
-
     function isEmailVerified() {
       return isSignedIn() && request.auth.token.email_verified == true;
     }
@@ -25,7 +20,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return request.auth != null && request.auth.uid == 'fjs9cwvUOtY6WOSxC6bSVZviYhB2';
+      return isEmailVerified() && 
+             (request.auth.token.email.lower() == 'antlasmaelcisi@gmail.com' || exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
     }
 
     function incoming() {
@@ -44,9 +40,10 @@ service cloud.firestore {
     }
 
     function isValidBlog(blog) {
-      // Validate fields if they exist, or implicitly require them because of type checks
-      return blog.title is string && blog.title.size() <= 500 &&
-             (blog.content is string || blog.content is list) && // Allow content as string or array
+      // Required fields: title, content, status, createdAt, updatedAt
+      return blog.keys().hasAll(['title', 'content', 'status', 'createdAt', 'updatedAt']) &&
+             blog.title is string && blog.title.size() <= 500 &&
+             blog.content is string && blog.content.size() <= 1048576 && // 1MB limit
              blog.status in ['draft', 'published'] &&
              (blog.createdAt is timestamp || blog.createdAt is string) &&
              (blog.updatedAt is timestamp || blog.updatedAt is string);
@@ -73,7 +70,10 @@ service cloud.firestore {
                     (incoming().createdAt == request.time || incoming().createdAt is timestamp) &&
                     incoming().updatedAt == request.time;
       
-      allow update: if (isAdmin() || isOwner(existing())) && isValidId(blogId);
+      allow update: if isAdmin() && isValidId(blogId) && isValidBlog(incoming()) &&
+                    // Enforce immutability of createdAt
+                    incoming().createdAt == existing().createdAt &&
+                    (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
       
       allow delete: if isAdmin() && isValidId(blogId);
 
