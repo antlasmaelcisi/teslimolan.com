@@ -74,6 +74,18 @@ interface TableData {
   columnWidths?: { [key: number]: number };
 }
 
+interface NoteData {
+  content: string;
+  color?: string;
+}
+
+interface ButtonData {
+  text: string;
+  link: string;
+  icon?: string;
+  position?: 'right' | 'bottom';
+}
+
 interface Block {
   id: string;
   type: 'text' | 'button' | 'heading' | 'image' | 'divider' | 'hero' | 'table' | 'note';
@@ -81,28 +93,21 @@ interface Block {
   link?: string;
   alignment?: 'left' | 'center' | 'right' | 'justify';
   textColor?: string;
-  hasButton?: boolean;
-  buttonText?: string;
-  buttonLink?: string;
-  buttonIcon?: string;
   background?: 'white' | 'gray' | 'accent' | 'dark';
   imageUrl?: string;
   caption?: string;
-  hasNote?: boolean;
-  noteContent?: string;
-  notes?: Note[];
+  note?: NoteData | null;
+  button?: ButtonData | null;
   data?: TableData;
   tableTransparent?: boolean;
-  buttons?: { text: string, link: string, icon?: string }[];
   manualBackground?: boolean;
-  buttonPosition?: 'right' | 'bottom';
   tableAlignment?: 'left' | 'full' | 'right';
 }
 
 interface Blog {
   id: string;
   title: string;
-  content: string; // Will store JSON string of blocks
+  content: Block[]; // Changed from string to Block[]
   status: 'draft' | 'published';
   createdAt: any;
   updatedAt: any;
@@ -2336,7 +2341,7 @@ export default function App() {
     const newBlog: Blog = {
       id: slug,
       title: `${baseTitle} ${nextNum}`,
-      content: JSON.stringify([{ id: '1', type: 'text', content: 'Metin yazmak için tıklayın...', alignment: 'justify' }]),
+      content: [],
       status: 'draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -2348,7 +2353,6 @@ export default function App() {
 
   const isSavingRef = useRef(false);
   const pendingNewBlogRef = useRef<Blog | null>(null);
-
 
   const saveBlogToFirebase = async (blogToSave: Blog, status: 'draft' | 'published', skipNavigate: boolean = false) => {
     try {
@@ -2364,7 +2368,7 @@ export default function App() {
       
       const payload = {
         title: blogToSave.title || 'Adsız Blog',
-        content: blocks.length > 0 ? JSON.stringify(blocks) : blogToSave.content || '[]',
+        content: blocks.length > 0 ? blocks : [],
         status,
         authorEmail: currentUser.email,
         updatedAt: new Date().toISOString()
