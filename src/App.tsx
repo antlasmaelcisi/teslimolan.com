@@ -261,7 +261,7 @@ const getTableCellAlignment = (cellHtml: string) => {
 
 const getBlogDisplayImage = (blog: Blog) => {
   try {
-    const blocks = JSON.parse(blog.content);
+    const blocks = Array.isArray(blog.content) ? blog.content : JSON.parse(blog.content);
     if (!Array.isArray(blocks)) return `https://picsum.photos/seed/${blog.id}/800/400`;
     
     const heroBlock = blocks.find((b: Block) => b.type === 'hero' && b.imageUrl);
@@ -898,7 +898,7 @@ export default function App() {
   useEffect(() => {
     if (editingBlog) {
       try {
-        const parsed = JSON.parse(editingBlog.content);
+        const parsed = Array.isArray(editingBlog.content) ? editingBlog.content : JSON.parse(editingBlog.content);
         let finalBlocks = [];
         if (Array.isArray(parsed) && parsed.length > 0) {
           finalBlocks = parsed;
@@ -2368,7 +2368,8 @@ export default function App() {
       
       const payload = {
         title: blogToSave.title || 'Adsız Blog',
-        content: blocks.length > 0 ? blocks : [],
+        // Strip undefined fields to avoid Firestore error
+        content: blocks.length > 0 ? JSON.parse(JSON.stringify(blocks)) : [],
         status,
         authorEmail: currentUser.email,
         updatedAt: new Date().toISOString()
