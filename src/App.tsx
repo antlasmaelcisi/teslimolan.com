@@ -102,6 +102,15 @@ interface Block {
   tableTransparent?: boolean;
   manualBackground?: boolean;
   tableAlignment?: 'left' | 'full' | 'right';
+  hasButton?: boolean;
+  buttons?: any[];
+  buttonText?: string;
+  buttonLink?: string;
+  buttonPosition?: 'right' | 'bottom';
+  buttonIcon?: string;
+  notes?: Note[];
+  hasNote?: boolean;
+  noteContent?: string;
 }
 
 interface Blog {
@@ -361,7 +370,7 @@ const renderButtonIcon = (iconName?: string) => {
   return <Icon strokeWidth={2.5} className="w-5 h-5 md:w-4 md:h-4 text-inherit drop-shadow-sm" />;
 };
 
-const Login = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
+const Login = ({ onLoginSuccess, isDarkMode }: { onLoginSuccess: () => void, isDarkMode: boolean }) => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -397,26 +406,26 @@ const Login = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <div 
-        className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-gray-200/50 rounded-3xl shadow-2xl overflow-hidden"
+        className={`w-full max-w-md ${isDarkMode ? 'bg-[#1c1c1e] border-[#38383a]' : 'bg-white/80 border-gray-200/50'} backdrop-blur-xl border rounded-3xl shadow-2xl overflow-hidden`}
       >
         <div className="p-8 text-center">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-[#1F7144]/10 rounded-2xl flex items-center justify-center">
-              <BadgeCheck className="text-[#1F7144]" size={32} />
+            <div className={`w-16 h-16 ${isDarkMode ? 'bg-blue-900/30' : 'bg-[#1F7144]/10'} rounded-2xl flex items-center justify-center`}>
+              <BadgeCheck className={isDarkMode ? 'text-blue-400' : 'text-[#1F7144]'} size={32} />
             </div>
           </div>
           
-          <h2 className="text-2xl font-bold text-[#1d1d1f] mb-2">Admin Panel</h2>
-          <p className="text-gray-500 text-sm mb-8">Lütfen yetkili Google hesabınızla giriş yapın.</p>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#1d1d1f]'} mb-2`}>Admin Panel</h2>
+          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-8`}>Lütfen yetkili Google hesabınızla giriş yapın.</p>
           
           <div className="space-y-4">
             <button 
               onClick={handleGoogleLogin}
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-lg shadow-sm hover:bg-gray-50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className={`w-full py-3.5 ${isDarkMode ? 'bg-[#2c2c2e] border-white/5 text-white hover:bg-[#38383a]' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'} border rounded-xl font-medium text-lg shadow-sm active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3`}
             >
               {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-gray-300 border-t-[#1F7144] rounded-full animate-spin" />
+                <div className={`w-5 h-5 border-2 ${isDarkMode ? 'border-gray-600 border-t-blue-400' : 'border-gray-300 border-t-[#1F7144]'} rounded-full animate-spin`} />
               ) : (
                 <>
                   <svg className="w-6 h-6" viewBox="0 0 24 24">
@@ -431,14 +440,14 @@ const Login = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
             </button>
             
             {error && (
-              <p className="text-red-500 text-sm font-medium px-4">
+              <p className={`text-sm font-medium px-4 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>
                 {error}
               </p>
             )}
           </div>
         </div>
         
-        <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-100 text-center">
+        <div className={`px-8 py-4 ${isDarkMode ? 'bg-black/20 border-white/5' : 'bg-gray-50/50 border-gray-100'} border-t text-center`}>
           <p className="text-xs text-gray-400">teslimolan.com &copy; 2026</p>
         </div>
       </div>
@@ -755,45 +764,47 @@ export default function App() {
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+  const [readingLayout, setReadingLayout] = useState<'modern' | 'classic'>('modern');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
 
-  // Close admin menu when clicking outside
+  const isDarkModeActive = theme === 'dark' && viewingBlog && !editingBlog;
+
+  useEffect(() => {
+    if (isDarkModeActive) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [isDarkModeActive]);
+
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (!target.closest('.admin-menu-container')) {
         setIsAdminMenuOpen(false);
       }
+      if (!target.closest('.layout-menu-container')) {
+        setIsLayoutMenuOpen(false);
+      }
     };
-    if (isAdminMenuOpen) {
+    if (isAdminMenuOpen || isLayoutMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isAdminMenuOpen]);
+  }, [isAdminMenuOpen, isLayoutMenuOpen]);
 
 
 
-  const lastScrollY = useRef(0);
-  const isScrolling = useRef(false);
-  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
-  
-  // High-performance refs to avoid scroll listener re-binding
-  const phRef = useRef(64);
-  const thRef = useRef(112);
   
   const updateHeights = useCallback(() => {
-    // Only update if not actively scrolling to prevent jitter during transitions
-    if (isScrolling.current) return;
-
     if (primaryHeaderRef.current && secondaryHeaderRef.current) {
       const ph = primaryHeaderRef.current.offsetHeight;
       const sh = secondaryHeaderRef.current.offsetHeight;
       const th = ph + sh;
       
       if (ph > 0 && th > 0) {
-        // Update refs immediately for the scroll listener
-        phRef.current = ph;
-        thRef.current = th;
-
         // Update state to trigger predictable padding-top updates
         setPrimaryHeaderHeight(ph);
         setTotalHeaderHeight(th);
@@ -818,57 +829,6 @@ export default function App() {
     
     return () => resizeObserver.disconnect();
   }, [updateHeights, editingBlog?.id]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      isScrolling.current = true;
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = setTimeout(() => { isScrolling.current = false; }, 200);
-
-      const currentScrollY = window.scrollY;
-      
-      // Use direct window.requestAnimationFrame for frame-perfect sync
-      window.requestAnimationFrame(() => {
-        // Absolute stability: compensate the browser's scroll exactly 
-        // until the primary header is fully hidden.
-        const ph = phRef.current;
-        let headerOffset = Math.min(currentScrollY, ph);
-        const editorOffset = Math.min(currentScrollY, ph);
-        
-        const currentlyOpen = headerOffset === 0;
-        if (isHeaderFullyVisibleRef.current !== currentlyOpen) {
-          setIsHeaderFullyVisible(currentlyOpen);
-          isHeaderFullyVisibleRef.current = currentlyOpen;
-        }
-
-        if (headerContainerRef.current) {
-          // Slide the header container up
-          headerContainerRef.current.style.transform = `translate3d(0, -${Math.round(headerOffset)}px, 0)`;
-        }
-        if (editorAreaRef.current) {
-          // Slide the content area down by the EXACT same amount to lock its screen position
-          editorAreaRef.current.style.transform = `translate3d(0, ${Math.round(editorOffset)}px, 0)`;
-        }
-
-        if (!editingBlog) {
-          if (currentScrollY < 10) {
-            setIsHeaderVisible(true);
-          } else if (currentScrollY > lastScrollY.current) {
-            if (currentScrollY > 100) setIsHeaderVisible(false);
-          } else {
-            setIsHeaderVisible(true);
-          }
-        }
-        lastScrollY.current = currentScrollY;
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []); // Stable listener
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -2114,8 +2074,11 @@ export default function App() {
     const colCount = block.data.rows[0]?.cells.length || 0;
 
     return (
-      <div className="w-full overflow-x-auto rounded-2xl border border-gray-200 shadow-sm scrollbar-thin">
-        <table className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} text-[12pt] font-sans`}>
+      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200'} shadow-sm scrollbar-thin`}>
+        <table 
+          className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-[12pt] font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
+          style={{ '--mobile-min-width': colCount > 2 ? `${colCount * 140}px` : '100%' } as React.CSSProperties}
+        >
           <colgroup>
             {Array.from({ length: colCount }).map((_, idx) => (
               <col key={idx} style={{ width: block.data?.columnWidths?.[idx] }} />
@@ -2139,7 +2102,7 @@ export default function App() {
                           key={colIndex}
                           rowSpan={merged.endRow - merged.startRow + 1} 
                           colSpan={merged.endCol - merged.startCol + 1}
-                          className={`border-gray-200 p-3 min-w-[100px] text-[#000000] text-justify font-sans ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
+                          className={`${isDarkModeActive ? 'border-white/10 text-white' : 'border-gray-200 text-[#000000]'} p-3 min-w-[100px] text-justify font-sans ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
                           style={block.data?.cellStyles?.[`${rowIndex}-${colIndex}`]}
                           dangerouslySetInnerHTML={{ __html: cell }}
                         />
@@ -2153,7 +2116,7 @@ export default function App() {
                   return (
                     <td 
                       key={colIndex}
-                      className={`border-gray-200 p-3 min-w-[100px] text-[#000000] text-justify font-sans ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
+                      className={`${isDarkModeActive ? 'border-white/10 text-white' : 'border-gray-200 text-[#000000]'} p-3 min-w-[100px] text-justify font-sans ${isBottomEdge ? '' : 'border-b'} ${isRightEdge ? '' : 'border-r'}`}
                       style={block.data?.cellStyles?.[`${rowIndex}-${colIndex}`]}
                       dangerouslySetInnerHTML={{ __html: cell }}
                     />
@@ -2253,8 +2216,8 @@ export default function App() {
     
     return (
       <div className={isBottom 
-        ? `flex flex-wrap justify-center gap-4 py-2` 
-        : `flex flex-col md:flex-col flex-wrap items-center md:items-start justify-center md:justify-start gap-4 md:gap-2 shrink-0`}>
+        ? `flex flex-wrap justify-center gap-4 py-2 w-full md:w-auto` 
+        : `flex flex-col flex-wrap items-center md:items-start justify-center md:justify-start gap-4 md:gap-2 shrink-0`}>
         {block.hasButton && (
           <div 
             className={`sites-button-small cursor-pointer group ${getButtonColorClass(block.buttonIcon)} ${!isBottom ? 'sites-button-side' : ''}`}
@@ -2289,8 +2252,8 @@ export default function App() {
     
     return (
       <div className={isBottom 
-        ? `flex flex-wrap justify-center gap-4 py-2` 
-        : `flex flex-row md:flex-col flex-wrap items-center md:items-start justify-center md:justify-start gap-4 md:gap-2 shrink-0 mt-4 md:mt-1`}>
+        ? `w-full flex flex-wrap justify-center gap-4 mt-2 mb-6 md:my-2` 
+        : `w-full md:w-auto flex flex-row md:flex-col flex-wrap items-center md:items-start justify-center md:justify-start gap-4 md:gap-2 shrink-0 mt-2 mb-6 md:mt-1 md:mb-0`}>
         {block.hasButton && (
           <a 
             href={block.buttonLink} 
@@ -2366,10 +2329,26 @@ export default function App() {
       
       const blogId = blogToSave.id && !blogToSave.id.startsWith('new-') ? blogToSave.id : null;
       
+      // Determine which content to use: the current editor blocks or the blog's existing content
+      const isCurrentlyEditing = editingBlog && blogToSave.id === editingBlog.id;
+      let contentToSave;
+      
+      if (isCurrentlyEditing) {
+        contentToSave = blocks;
+      } else {
+        // If not in editor, use the blog's existing content (could be array or parseable string)
+        const rawContent = (blogToSave as any).content;
+        contentToSave = Array.isArray(rawContent) 
+          ? rawContent 
+          : (typeof rawContent === 'string' && rawContent.trim() !== '' 
+            ? JSON.parse(rawContent) 
+            : rawContent || []);
+      }
+      
       const payload = {
         title: blogToSave.title || 'Adsız Blog',
-        // Strip undefined fields to avoid Firestore error
-        content: blocks.length > 0 ? JSON.parse(JSON.stringify(blocks)) : [],
+        // Strip undefined/null-like fields to avoid Firestore error via deep clone
+        content: JSON.parse(JSON.stringify(contentToSave)),
         status,
         authorEmail: currentUser.email,
         updatedAt: new Date().toISOString()
@@ -2506,24 +2485,41 @@ export default function App() {
     try {
       const parsed = typeof content === 'string' ? JSON.parse(content) : content;
       if (Array.isArray(parsed)) {
+        const isModern = readingLayout === 'modern';
+        
         return parsed.map((block: Block) => {
-          const bgClass = block.background === 'gray' ? 'bg-gray-50 text-gray-900 theme-text-gray' : (block.background === 'accent' ? 'bg-blue-50 text-blue-900 theme-text-accent' : (block.background === 'dark' ? 'bg-gray-900 text-white theme-text-white' : 'bg-white text-gray-900 theme-text-gray'));
+          let bgClass = '';
+          if (block.background === 'gray') {
+            bgClass = isDarkModeActive ? 'bg-[#2c2c2e] text-white theme-text-white' : 'bg-gray-50 text-gray-900 theme-text-gray';
+          } else if (block.background === 'accent') {
+            bgClass = isDarkModeActive ? 'bg-blue-900/30 text-blue-100 theme-text-white' : 'bg-blue-50 text-blue-900 theme-text-accent';
+          } else if (block.background === 'dark') {
+            bgClass = 'bg-gray-900 text-white theme-text-white';
+          } else {
+            bgClass = isDarkModeActive ? 'bg-[#1c1c1e] text-white theme-text-white' : 'bg-white text-gray-900 theme-text-gray';
+          }
           
+          const blockWrapperClass = isModern 
+            ? `${bgClass} rounded-2xl shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-6 overflow-hidden w-full`
+            : `${bgClass} w-full ${block.type === 'text' || block.type === 'note' ? (isDarkModeActive ? 'border-b border-white/10' : 'border-b border-gray-100/30') : ''}`;
+            
+          const blockInnerClass = isModern ? "p-10" : "max-w-4xl mx-auto p-10";
+
           if (block.type === 'hero') return (
-            <div key={block.id} className="relative h-[400px] flex items-center justify-center overflow-hidden">
+            <div key={block.id} className={`relative h-[400px] flex items-center justify-center overflow-hidden ${isModern ? `rounded-2xl shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-6 ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}` : ''}`}>
               <HeroImage src={block.imageUrl!} viewMode={editingBlog ? 'edit' : 'read'} />
               <div className="absolute inset-0 bg-black/40" />
-              <div className="relative z-10 text-center text-white px-4 w-full max-w-4xl">
+              <div className={`relative z-10 text-center text-white px-4 ${isModern ? 'w-full' : 'w-full max-w-4xl'}`}>
                 {renderBlockContent(block, (
-                  <h1 className="text-5xl font-bold mb-4 font-sans" style={{ color: block.textColor }}>{block.content}</h1>
+                  <h1 className="text-5xl font-bold mb-4 font-sans leading-tight" style={{ color: block.textColor }}>{block.content}</h1>
                 ), false)}
               </div>
             </div>
           );
 
           if (block.type === 'heading') return (
-            <div key={block.id} className={`${bgClass} w-full`}>
-              <div className="max-w-4xl mx-auto p-10">
+            <div key={block.id} className={blockWrapperClass}>
+              <div className={blockInnerClass}>
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, (
@@ -2537,16 +2533,16 @@ export default function App() {
           );
 
           if (block.type === 'divider') return (
-            <div key={block.id} className={`w-full bg-white`}>
-              <div className="max-w-4xl mx-auto px-4">
-                <div className={`h-px w-full my-4 bg-gray-200`} />
+            <div key={block.id} className={isModern ? `w-full ${isDarkModeActive ? 'bg-[#1c1c1e] rounded-2xl border border-white/10' : 'bg-white rounded-2xl border border-gray-100/50'} shadow-sm mb-6 overflow-hidden` : `w-full ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}`}>
+              <div className={isModern ? "px-4" : "max-w-4xl mx-auto px-4"}>
+                <div className={`h-px w-full my-4 ${isDarkModeActive ? 'bg-white/10' : 'bg-gray-200'}`} />
               </div>
             </div>
           );
 
           if (block.type === 'image') return (
-            <div key={block.id} className={`${bgClass} w-full`}>
-              <div className={`max-w-4xl mx-auto p-10`}>
+            <div key={block.id} className={blockWrapperClass}>
+              <div className={blockInnerClass}>
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start gap-6 md:gap-10 w-full"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, (
@@ -2563,8 +2559,8 @@ export default function App() {
           );
 
           if (block.type === 'text') return (
-            <div key={block.id} className={`${bgClass} w-full border-b border-gray-100/30`}>
-              <div className="max-w-4xl mx-auto p-10">
+            <div key={block.id} className={blockWrapperClass}>
+              <div className={blockInnerClass}>
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, renderTextPublic(block), false)}
@@ -2575,8 +2571,8 @@ export default function App() {
             </div>
           );
           if (block.type === 'button') return (
-            <div key={block.id} className={`${bgClass} w-full`}>
-              <div className={`max-w-4xl mx-auto p-[38px] flex justify-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}`}>
+            <div key={block.id} className={blockWrapperClass}>
+              <div className={isModern ? `p-[38px] flex justify-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}` : `max-w-4xl mx-auto p-[38px] flex justify-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}`}>
                 <a href={block.link} target="_blank" rel="noopener noreferrer" className={`sites-button ${getButtonColorClass(block.buttonIcon)}`}>
                   {renderButtonIcon(block.buttonIcon)}
                   <span className={block.buttonIcon ? "hidden md:inline" : ""}>{block.content}</span>
@@ -2586,8 +2582,8 @@ export default function App() {
           );
 
           if (block.type === 'note') return (
-            <div key={block.id} className={`${bgClass} w-full border-b border-gray-100/30`}>
-              <div className="max-w-4xl mx-auto p-10">
+            <div key={block.id} className={blockWrapperClass}>
+              <div className={blockInnerClass}>
                 <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, null, false)}
@@ -2599,9 +2595,9 @@ export default function App() {
           );
           
           if (block.type === 'table' && block.data) return (
-            <div key={block.id} className={`${bgClass} w-full py-10`}>
-              <div className="max-w-4xl mx-auto px-10">
-                <div className={block.buttonPosition === 'bottom' || block.buttonPosition === undefined ? "flex flex-col gap-8" : "flex flex-col md:flex-row items-start justify-between gap-6 md:gap-10"}>
+            <div key={block.id} className={isModern ? `w-full mb-12 md:mb-6` : `${bgClass} w-full py-12 md:py-10`}>
+              <div className={isModern ? "" : "max-w-4xl mx-auto px-10"}>
+                <div className={block.buttonPosition === 'bottom' || block.buttonPosition === undefined ? "flex flex-col gap-1 md:gap-8" : "flex flex-col md:flex-row items-start justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition === 'right' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, renderTextPublic(block), false)}
                   </div>
@@ -2624,7 +2620,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
-      <VibrantWallpaper />
+      {!isDarkModeActive && <VibrantWallpaper />}
 
       {/* Viewport-level Scroll Progress Bar */}
       {viewingBlog && !editingBlog && (
@@ -2686,7 +2682,7 @@ export default function App() {
       </AnimatePresence>
       {/* Header */}
       {!editingBlog && (
-        <header className={`apple-glass border-b border-gray-200/50 z-[70] w-full fixed left-0 right-0 transition-all duration-300 shadow-sm ${isHeaderVisible ? 'top-0' : '-top-16'}`} style={{ willChange: 'transform', height: '64px' }}>
+        <header className={`apple-glass border-b ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} z-[70] w-full fixed left-0 right-0 transition-all duration-300 shadow-sm ${isHeaderVisible ? 'top-0' : '-top-16'}`} style={{ willChange: 'transform', height: '64px' }}>
           <main className="w-full max-w-4xl mx-auto px-4 sm:px-0 flex items-center justify-between relative h-[64px]">
             <div 
               className="flex items-center justify-between leading-none h-[42px] w-[896px] max-w-full z-[80]"
@@ -2698,37 +2694,114 @@ export default function App() {
                 }}
               >
                 <svg className="w-[42.7px] h-[40px] drop-shadow-sm mt-[2px]" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="361" y="78" width="247" height="437" fill="white"/>
-                  <path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="342" y="515" width="285" height="19" rx="9.5" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="342" y="59" width="285" height="19" rx="9.5" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="475" y="116" width="95" height="57" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="475" y="268" width="95" height="57" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="475" y="420" width="95" height="57" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="475" y="344" width="95" height="57" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="475" y="192" width="95" height="57" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <path d="M361 116H456V173H361V116Z" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="361" y="420" width="95" height="57" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <path d="M608 68.5C608 63.2533 612.253 59 617.5 59C622.747 59 627 63.2533 627 68.5V524.5C627 529.747 622.747 534 617.5 534C612.253 534 608 529.747 608 524.5V68.5Z" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <rect x="266" y="173" width="190" height="247" fill="white"/>
-                  <ellipse cx="202" cy="360.5" rx="25" ry="28.5" fill="white"/>
-                  <ellipse cx="202" cy="232.5" rx="25" ry="28.5" fill="white"/>
-                  <path d="M114 282L266 268V325L114 311V282Z" fill="white"/>
-                  <path d="M329.234 192V401H289.223V226.505H266V192H329.234Z" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
-                  <path d="M386.33 192H420.466C444.155 192 456 204.049 456 228.148V364.524C456 388.841 444.155 401 420.466 401H388.009C364.32 401 352.475 388.841 352.475 364.524V337.577H391.367V358.28C391.367 363.757 393.885 366.495 398.921 366.495H409.554C414.403 366.495 416.828 363.757 416.828 358.28V318.517H386.33C362.641 318.517 350.796 306.468 350.796 282.369V228.148C350.796 204.049 362.641 192 386.33 192ZM397.522 286.313H416.828V234.72C416.828 229.243 414.403 226.505 409.554 226.505H397.522C392.486 226.505 389.968 229.243 389.968 234.72V278.097C389.968 281.165 390.527 283.355 391.647 284.67C392.766 285.765 394.724 286.313 397.522 286.313Z" className="fill-[#1F7144] group-hover:fill-black transition-colors duration-300"/>
+                  <rect x="361" y="78" width="247" height="437" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+                  <path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="342" y="515" width="285" height="19" rx="9.5" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="342" y="59" width="285" height="19" rx="9.5" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="475" y="116" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="475" y="268" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="475" y="420" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="475" y="344" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="475" y="192" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <path d="M361 116H456V173H361V116Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="361" y="420" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <path d="M608 68.5C608 63.2533 612.253 59 617.5 59C622.747 59 627 63.2533 627 68.5V524.5C627 529.747 622.747 534 617.5 534C612.253 534 608 529.747 608 524.5V68.5Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <rect x="266" y="173" width="190" height="247" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+                  <ellipse cx="202" cy="360.5" rx="25" ry="28.5" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+                  <ellipse cx="202" cy="232.5" rx="25" ry="28.5" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+                  <path d="M114 282L266 268V325L114 311V282Z" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+                  <path d="M329.234 192V401H289.223V226.505H266V192H329.234Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
+                  <path d="M386.33 192H420.466C444.155 192 456 204.049 456 228.148V364.524C456 388.841 444.155 401 420.466 401H388.009C364.32 401 352.475 388.841 352.475 364.524V337.577H391.367V358.28C391.367 363.757 393.885 366.495 398.921 366.495H409.554C414.403 366.495 416.828 363.757 416.828 358.28V318.517H386.33C362.641 318.517 350.796 306.468 350.796 282.369V228.148C350.796 204.049 362.641 192 386.33 192ZM397.522 286.313H416.828V234.72C416.828 229.243 414.403 226.505 409.554 226.505H397.522C392.486 226.505 389.968 229.243 389.968 234.72V278.097C389.968 281.165 390.527 283.355 391.647 284.67C392.766 285.765 394.724 286.313 397.522 286.313Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
                 </svg>
                 {!viewingBlog && (
-                  <h1 className="text-xl font-bold tracking-tight text-[#1F7144] group-hover:text-black transition-colors duration-300 hidden sm:block leading-none">teslimolan.com</h1>
+                  <h1 className={`text-xl font-bold tracking-tight ${isDarkModeActive ? 'text-white group-hover:text-[#1a73e8]' : 'text-[#1F7144] group-hover:text-black'} transition-colors duration-300 hidden sm:block leading-none`}>teslimolan.com</h1>
                 )}
               </div>
 
               <nav className="flex items-center gap-1 sm:gap-2">
+                <div className="relative layout-menu-container">
+                  <button 
+                    onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
+                    className={`flex items-center justify-center gap-1 px-3 h-[28px] ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg text-xs font-semibold border transition-colors shadow-sm`}
+                  >
+                    <Layout size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
+                    <span className="hidden sm:inline">Görünüm</span>
+                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLayoutMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {isLayoutMenuOpen && (
+                      <div
+                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'bg-[#1c1c1e] border-[#38383a]' : 'bg-white border-gray-200/50'} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
+                      >
+                        <div className="flex divide-x divide-gray-100 dark:divide-gray-800">
+                          {/* Layout Selection */}
+                          <div className="flex-1 p-2 space-y-1">
+                            <div className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>Yerleşim</div>
+                            <button
+                              onClick={() => {
+                                setReadingLayout('modern');
+                                setIsLayoutMenuOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'modern' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
+                            >
+                              <span>Modern</span>
+                              {readingLayout === 'modern' && <BadgeCheck size={14} />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setReadingLayout('classic');
+                                setIsLayoutMenuOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'classic' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
+                            >
+                              <span>Klasik</span>
+                              {readingLayout === 'classic' && <BadgeCheck size={14} />}
+                            </button>
+                          </div>
+
+                          {/* Theme Selection */}
+                          <div className="flex-1 p-2 space-y-1">
+                            <div className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>Tema</div>
+                            <button
+                              onClick={() => {
+                                setTheme('light');
+                                setIsLayoutMenuOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'light' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Palette size={14} className="opacity-70" />
+                                <span>Aydınlık</span>
+                              </div>
+                              {theme === 'light' && <BadgeCheck size={14} />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setTheme('dark');
+                                setIsLayoutMenuOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'dark' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <PanelBottomClose size={14} className="opacity-70" />
+                                <span>Karanlık</span>
+                              </div>
+                              {theme === 'dark' && <BadgeCheck size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {viewingBlog && isAuthenticated && (
                   <button 
                     onClick={() => { 
                       navigate(`/edit/${viewingBlog.id}`);
                     }}
-                    className="w-[28px] h-[28px] flex items-center justify-center bg-white text-blue-600 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 transition-all duration-300 active:scale-95"
+                    className={`w-[28px] h-[28px] flex items-center justify-center ${isDarkModeActive ? 'bg-[#1c1c1e] text-blue-400 border-white/10 hover:bg-white/5' : 'bg-white text-blue-600 border-gray-200 hover:bg-gray-50'} rounded-lg border shadow-sm transition-all duration-300 active:scale-95`}
                     title="Düzenle"
                   >
                     <Edit3 size={14} />
@@ -2738,9 +2811,9 @@ export default function App() {
                   <div className="relative admin-menu-container">
                     <button 
                       onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
-                      className="flex items-center justify-center gap-1 w-[28px] md:w-[98px] h-[28px] bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold border border-blue-100 hover:bg-blue-100 transition-colors shadow-sm mq-640:shadow-none"
+                      className={`flex items-center justify-center gap-1 w-[28px] md:w-[98px] h-[28px] ${isDarkModeActive ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 hover:bg-blue-900/50' : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'} rounded-lg text-xs font-semibold border transition-colors shadow-sm mq-640:shadow-none`}
                     >
-                      <BadgeCheck size={14} className="text-blue-500" />
+                      <BadgeCheck size={14} className={isDarkModeActive ? "text-blue-400" : "text-blue-500"} />
                       <span className="hidden md:inline">Admin</span>
                       <ChevronDown size={12} className={`hidden md:block transition-transform duration-200 ${isAdminMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -2748,7 +2821,7 @@ export default function App() {
                     <AnimatePresence>
                       {isAdminMenuOpen && (
                         <div
-                          className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden z-[100]"
+                          className={`absolute right-0 mt-2 w-48 ${isDarkModeActive ? 'bg-[#1c1c1e] border-[#38383a]' : 'bg-white border-gray-200/50'} rounded-2xl shadow-xl border overflow-hidden z-[100]`}
                         >
                           <div className="p-2 space-y-1">
                             <button
@@ -2756,18 +2829,18 @@ export default function App() {
                                 navigate('/edit');
                                 setIsAdminMenuOpen(false);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-colors text-left"
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium ${isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'} rounded-xl transition-colors text-left`}
                             >
                               <Plus size={16} />
                               Blog Üret
                             </button>
-                            <div className="h-px bg-gray-100 mx-2 my-1" />
+                            <div className={`h-px ${isDarkModeActive ? 'bg-white/5' : 'bg-gray-100'} mx-2 my-1`} />
                             <button
                               onClick={() => {
                                 handleLogout();
                                 setIsAdminMenuOpen(false);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors text-left"
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 ${isDarkModeActive ? 'hover:bg-red-900/20' : 'hover:bg-red-50'} rounded-xl transition-colors text-left`}
                             >
                               <LogOut size={16} />
                                 Çıkış Yap
@@ -2783,7 +2856,7 @@ export default function App() {
 
             {viewingBlog && (
               <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center text-center px-4 overflow-hidden max-w-[160px] xs:max-w-[200px] sm:max-w-[400px] md:max-w-[600px] h-[64px] cursor-default z-10">
-                <h2 className="text-lg font-bold font-sans truncate w-full text-gray-900 transition-all duration-300">
+                <h2 className={`text-lg font-bold font-sans truncate w-full ${isDarkModeActive ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
                   {viewingBlog.title}
                 </h2>
               </div>
@@ -2961,15 +3034,15 @@ export default function App() {
           {activeTab === 'home' ? (
             <div
               key="home"
-              className={viewingBlog ? "space-y-8" : "space-y-0 text-gray-900"}
+              className={viewingBlog ? "space-y-8" : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}
             >
               {viewingBlog ? (
                 <>
                   <div 
-                    className={`relative z-10 rounded-xl overflow-hidden bg-white shadow-sm border border-gray-200 max-w-4xl mx-auto`}
+                    className={`relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-0`}
                   >
                     <div className="pb-20 bg-transparent">
-                      <div className="space-y-0 text-gray-900">
+                      <div className={readingLayout === 'modern' ? `space-y-6 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}` : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>
                         {renderBlocks(editingBlog?.id === viewingBlog.id ? blocks : viewingBlog.content)}
                       </div>
                     </div>
@@ -2986,7 +3059,7 @@ export default function App() {
                       <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
                         <AppleIcon icon={Eye} colorClass="apple-icon-gray" size={32} className="w-16 h-16" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900">Henüz yayınlanmış blog yok</h3>
+                      <h3 className={`text-lg font-medium ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>Henüz yayınlanmış blog yok</h3>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -3017,7 +3090,7 @@ export default function App() {
                             )}
                           </div>
                           <div className="p-5 flex-1 flex flex-col">
-                            <h3 className="text-xl font-bold mb-4 line-clamp-2 font-sans group-hover:text-blue-600 transition-colors">{blog.title}</h3>
+                            <h3 className={`text-xl font-bold mb-4 line-clamp-2 font-sans group-hover:text-blue-600 transition-colors ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>{blog.title}</h3>
                             <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
                               <div className="flex items-center gap-2 text-[11px] font-medium text-gray-400">
                                 <Clock size={12} className="text-gray-300" />
@@ -3041,13 +3114,13 @@ export default function App() {
                   <div className="w-12 h-12 border-4 border-[#1F7144]/20 border-t-[#1F7144] rounded-full animate-spin" />
                 </div>
               ) : !isAuthenticated ? (
-                <Login onLoginSuccess={handleLoginSuccess} />
+                <Login onLoginSuccess={handleLoginSuccess} isDarkMode={theme === 'dark'} />
               ) : editingBlog ? (
                 <div 
                   className="flex items-start bg-transparent h-full min-h-screen relative"
                   onClick={() => { setActiveBlockId(null); setSelectedCells([]); }}
                 >
-                  <VibrantWallpaper />
+                  {!isDarkModeActive && <VibrantWallpaper />}
                   
                   {/* Editor Area */}
                   <div 
@@ -3060,7 +3133,7 @@ export default function App() {
                     onClick={() => { setActiveBlockId(null); setSelectedCells([]); }}
                   >
                     <div 
-                      className="bg-white/90 backdrop-blur-sm shadow-2xl border border-white/40 min-h-[600px] w-full max-w-4xl mx-auto flex flex-col relative pt-0 pb-24 rounded-2xl" 
+                      className="bg-white/90 dark:bg-black/80 apple-card backdrop-blur-sm shadow-2xl border border-white/40 dark:border-white/10 min-h-[600px] w-full max-w-4xl mx-auto flex flex-col relative pt-0 pb-24 rounded-2xl" 
                       onClick={() => { setActiveBlockId(null); setSelectedCells([]); }}
                     >
                       {blocks.length === 0 && (
@@ -3392,7 +3465,7 @@ export default function App() {
               ) : (
                 <div className="space-y-8">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold font-sans">/edit</h2>
+                    <h2 className={`text-3xl font-bold font-sans ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>/edit</h2>
                     <div className="flex items-center gap-4">
                       <button 
                         onClick={createNewDraft}
@@ -3405,7 +3478,7 @@ export default function App() {
                   </div>
 
                   {blogs.length === 0 ? (
-                    <div className="bg-white/60 backdrop-blur-md border border-dashed border-white/40 rounded-2xl p-12 text-center shadow-lg">
+                    <div className={`${isDarkModeActive ? 'bg-black/40 border-white/10' : 'bg-white/60 border-white/40'} backdrop-blur-md border border-dashed rounded-2xl p-12 text-center shadow-lg`}>
                       <div className="w-16 h-16 bg-white/40 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                         <Edit3 className="text-gray-400" size={32} />
                       </div>

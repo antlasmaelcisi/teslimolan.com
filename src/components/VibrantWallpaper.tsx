@@ -2,7 +2,7 @@ import React from 'react';
 
 const VibrantWallpaper: React.FC = () => {
   return (
-    <div className="fixed inset-0 w-full h-full z-[-1] pointer-events-none overflow-hidden bg-[#f5f5f7]">
+    <div className="fixed inset-0 w-full h-full z-[-1] pointer-events-none overflow-hidden bg-[var(--theme-bg)]">
       {/* Abstract macOS-style vector shapes - Big Sur / Monterey style */}
       <div 
         className="absolute top-[-20%] left-[-10%] w-[120%] h-[120%] opacity-60"

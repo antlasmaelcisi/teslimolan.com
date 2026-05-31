@@ -43,10 +43,11 @@ service cloud.firestore {
       // Required fields: title, content, status, createdAt, updatedAt
       return blog.keys().hasAll(['title', 'content', 'status', 'createdAt', 'updatedAt']) &&
              blog.title is string && blog.title.size() <= 500 &&
-             blog.content is string && blog.content.size() <= 1048576 && // 1MB limit
+             blog.content is list && blog.content.size() <= 1000 && 
              blog.status in ['draft', 'published'] &&
              (blog.createdAt is timestamp || blog.createdAt is string) &&
-             (blog.updatedAt is timestamp || blog.updatedAt is string);
+             (blog.updatedAt is timestamp || blog.updatedAt is string) &&
+             (!blog.keys().hasAny(['authorEmail']) || (blog.authorEmail is string && blog.authorEmail.size() <= 256));
     }
 
     // --- Collections ---

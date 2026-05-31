@@ -15,7 +15,7 @@
       "type": "object",
       "properties": {
         "title": { "type": "string" },
-        "content": { "type": "string", "description": "JSON string of blocks" },
+        "content": { "type": "array", "items": { "type": "object" }, "description": "Array of block objects" },
         "status": { "type": "string", "enum": ["draft", "published"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" },
