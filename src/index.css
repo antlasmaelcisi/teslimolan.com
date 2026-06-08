@@ -305,8 +305,8 @@ table.table-fixed {
 .apple-icon-container:hover,
 button:hover .apple-icon-container {
   box-shadow: 
+    0 1px 2px rgba(0,0,0,0.1),
     0 2px 4px rgba(0,0,0,0.1),
-    0 8px 16px rgba(0,0,0,0.15),
     inset 0 -1px 2px rgba(0,0,0,0.2),
     inset 0 1px 2px rgba(255,255,255,0.5);
 }
@@ -357,16 +357,56 @@ button:hover .apple-tooltip {
 }
 
 /* Vibrant macOS Gradients - More complex for realism */
-.apple-icon-blue { background: linear-gradient(180deg, #5AC8FA 0%, #007AFF 100%); }
-.apple-icon-green { background: linear-gradient(180deg, #4CD964 0%, #28CD41 100%); }
+.apple-icon-blue {
+  background: linear-gradient(180deg, #3DA8FF 0%, #007AFF 100%);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 1px 2px rgba(0, 122, 255, 0.15), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+.apple-icon-blue:hover {
+  background: linear-gradient(180deg, #52B5FF 0%, #0088FF 100%) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), inset 0 1.5px 2px rgba(255,255,255,0.6) !important;
+  filter: brightness(1.08) saturate(1.05);
+}
+
+.apple-icon-green {
+  background: linear-gradient(180deg, #4CD964 0%, #28CD41 100%);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 1px 2px rgba(40, 205, 65, 0.15), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+.apple-icon-green:hover {
+  background: linear-gradient(180deg, #5DF375 0%, #2BE046 100%) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), inset 0 1.5px 2px rgba(255,255,255,0.6) !important;
+  filter: brightness(1.08) saturate(1.05);
+}
+
+.apple-icon-split {
+  background: linear-gradient(180deg, #FC3E59 0%, #F81E3D 100%);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 1px 2px rgba(248, 30, 61, 0.15), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+.apple-icon-split:hover {
+  background: linear-gradient(180deg, #FF5772 0%, #FF2B4C 100%) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), inset 0 1.5px 2px rgba(255,255,255,0.6) !important;
+  filter: brightness(1.08) saturate(1.05);
+}
+
+.apple-icon-terminal {
+  background: linear-gradient(180deg, #FFCC00 0%, #FFB300 100%);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 1px 2px rgba(255, 179, 0, 0.15), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+.apple-icon-terminal:hover {
+  background: linear-gradient(180deg, #FFE033 0%, #FFC400 100%) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), inset 0 1.5px 2px rgba(255,255,255,0.6) !important;
+  filter: brightness(1.08) saturate(1.05);
+}
+
 .apple-icon-red { background: linear-gradient(180deg, #FF3B30 0%, #D70015 100%); }
 .apple-icon-orange { background: linear-gradient(180deg, #FF9500 0%, #FF8000 100%); }
 .apple-icon-purple { background: linear-gradient(180deg, #AF52DE 0%, #8944AB 100%); }
 .apple-icon-pink { background: linear-gradient(180deg, #ff00ff 0%, #b300b3 100%); }
 .apple-icon-teal { background: linear-gradient(180deg, #5AC8FA 0%, #00AEEF 100%); }
 .apple-icon-table { background: linear-gradient(180deg, #217748 0%, #1f7144 100%); }
-.apple-icon-terminal { background: linear-gradient(180deg, #FFCC00 0%, #FFB300 100%); }
-.apple-icon-split { background: linear-gradient(180deg, #FC3E59 0%, #F81E3D 100%); }
 .apple-icon-indigo { background: linear-gradient(180deg, #5856D6 0%, #3634A3 100%); }
 .apple-icon-yellow { background: linear-gradient(180deg, #FFCC00 0%, #FFB300 100%); }
 .apple-icon-gray { background: linear-gradient(180deg, #8E8E93 0%, #636366 100%); }

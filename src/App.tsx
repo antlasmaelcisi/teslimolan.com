@@ -54,7 +54,9 @@ import {
   RotateCcw,
   TableCellsMerge,
   TableCellsSplit,
-  PanelTop
+  PanelTop,
+  Check,
+  Sun
 } from 'lucide-react';
 
 interface Note {
@@ -768,7 +770,7 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
 
-  const isDarkModeActive = theme === 'dark' && viewingBlog && !editingBlog;
+  const isDarkModeActive = theme === 'dark' && !editingBlog && !window.location.pathname.startsWith('/edit') && !window.location.pathname.startsWith('/admin') && activeTab !== 'create';
 
   useEffect(() => {
     if (isDarkModeActive) {
@@ -2625,7 +2627,7 @@ export default function App() {
       {/* Viewport-level Scroll Progress Bar */}
       {viewingBlog && !editingBlog && (
         <motion.div 
-          className={`fixed left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 origin-left z-[99] transition-all duration-300 ${
+          className={`fixed left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 origin-left z-[60] transition-all duration-300 ${
             isHeaderVisible ? 'top-[64px]' : 'top-0'
           }`}
           style={{ scaleX: scrollYProgress }}
@@ -2722,11 +2724,10 @@ export default function App() {
                 <div className="relative layout-menu-container">
                   <button 
                     onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
-                    className={`flex items-center justify-center gap-1 px-3 h-[28px] ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg text-xs font-semibold border transition-colors shadow-sm`}
+                    className={`flex items-center justify-center gap-1.5 px-2.5 h-[28px] ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg border transition-colors shadow-sm`}
                   >
                     <Layout size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
-                    <span className="hidden sm:inline">Görünüm</span>
-                    <ChevronDown size={12} className={`transition-transform duration-200 ${isLayoutMenuOpen ? 'rotate-180' : ''}`} />
+                    <Sun size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
                   </button>
                   
                   <AnimatePresence>
@@ -2737,7 +2738,7 @@ export default function App() {
                         <div className="flex divide-x divide-gray-100 dark:divide-gray-800">
                           {/* Layout Selection */}
                           <div className="flex-1 p-2 space-y-1">
-                            <div className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>Yerleşim</div>
+                            <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>YERLEŞİM</div>
                             <button
                               onClick={() => {
                                 setReadingLayout('modern');
@@ -2746,7 +2747,7 @@ export default function App() {
                               className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'modern' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
                             >
                               <span>Modern</span>
-                              {readingLayout === 'modern' && <BadgeCheck size={14} />}
+                              {readingLayout === 'modern' && <Check size={14} />}
                             </button>
                             <button
                               onClick={() => {
@@ -2756,13 +2757,13 @@ export default function App() {
                               className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'classic' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
                             >
                               <span>Klasik</span>
-                              {readingLayout === 'classic' && <BadgeCheck size={14} />}
+                              {readingLayout === 'classic' && <Check size={14} />}
                             </button>
                           </div>
 
                           {/* Theme Selection */}
                           <div className="flex-1 p-2 space-y-1">
-                            <div className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>Tema</div>
+                            <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>TEMA</div>
                             <button
                               onClick={() => {
                                 setTheme('light');
@@ -2774,7 +2775,7 @@ export default function App() {
                                 <Palette size={14} className="opacity-70" />
                                 <span>Aydınlık</span>
                               </div>
-                              {theme === 'light' && <BadgeCheck size={14} />}
+                              {theme === 'light' && <Check size={14} />}
                             </button>
                             <button
                               onClick={() => {
@@ -2787,7 +2788,7 @@ export default function App() {
                                 <PanelBottomClose size={14} className="opacity-70" />
                                 <span>Karanlık</span>
                               </div>
-                              {theme === 'dark' && <BadgeCheck size={14} />}
+                              {theme === 'dark' && <Check size={14} />}
                             </button>
                           </div>
                         </div>
@@ -3042,7 +3043,10 @@ export default function App() {
                     className={`relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-0`}
                   >
                     <div className="pb-20 bg-transparent">
-                      <div className={readingLayout === 'modern' ? `space-y-6 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}` : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>
+                      <div className={readingLayout === 'modern' 
+                        ? `space-y-6 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}` 
+                        : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'} rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} shadow-sm overflow-hidden w-full`
+                      }>
                         {renderBlocks(editingBlog?.id === viewingBlog.id ? blocks : viewingBlog.content)}
                       </div>
                     </div>
@@ -3055,7 +3059,7 @@ export default function App() {
                       {[...Array(6)].map((_, i) => <BlogSkeleton key={i} />)}
                     </div>
                   ) : publishedBlogs.length === 0 ? (
-                    <div className="bg-white border border-dashed border-gray-300 rounded-xl p-12 text-center">
+                    <div className={`${isDarkModeActive ? 'bg-[#1c1c1e]/50 border-white/10' : 'bg-white border-gray-300'} border border-dashed rounded-xl p-12 text-center`}>
                       <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4">
                         <AppleIcon icon={Eye} colorClass="apple-icon-gray" size={32} className="w-16 h-16" />
                       </div>
@@ -3069,7 +3073,7 @@ export default function App() {
                           className="blogger-card overflow-hidden flex flex-col cursor-pointer group hover:border-blue-300 transition-all"
                           onClick={() => navigate(`/${blog.id}`)}
                         >
-                          <div className="h-40 bg-gray-100 relative overflow-hidden">
+                          <div className={`h-40 ${isDarkModeActive ? 'bg-[#2c2c2e]' : 'bg-gray-100'} relative overflow-hidden`}>
                             <img 
                               src={getBlogDisplayImage(blog)} 
                               alt={blog.title}
@@ -3091,7 +3095,7 @@ export default function App() {
                           </div>
                           <div className="p-5 flex-1 flex flex-col">
                             <h3 className={`text-xl font-bold mb-4 line-clamp-2 font-sans group-hover:text-blue-600 transition-colors ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>{blog.title}</h3>
-                            <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
+                            <div className={`flex items-center justify-between mt-auto pt-4 border-t ${isDarkModeActive ? 'border-white/10' : 'border-gray-100'}`}>
                               <div className="flex items-center gap-2 text-[11px] font-medium text-gray-400">
                                 <Clock size={12} className="text-gray-300" />
                                 {new Date(blog.updatedAt).toLocaleDateString('tr-TR')}
@@ -3551,30 +3555,30 @@ export default function App() {
 
       {/* Footer */}
       {!viewingBlog && (
-        <footer className="bg-white border-t border-gray-200 py-8 mt-auto">
+        <footer className={`${isDarkModeActive ? 'bg-[#1c1c1e] border-white/10' : 'bg-white border-gray-200'} border-t py-8 mt-auto transition-colors duration-300`}>
           <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <svg className="w-6 h-6" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="361" y="78" width="247" height="437" fill="white"/>
-              <path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" fill="#1F7144"/>
-              <rect x="342" y="515" width="285" height="19" rx="9.5" fill="#1F7144"/>
-              <rect x="342" y="59" width="285" height="19" rx="9.5" fill="#1F7144"/>
-              <rect x="475" y="116" width="95" height="57" fill="#1F7144"/>
-              <rect x="475" y="268" width="95" height="57" fill="#1F7144"/>
-              <rect x="475" y="420" width="95" height="57" fill="#1F7144"/>
-              <rect x="475" y="344" width="95" height="57" fill="#1F7144"/>
-              <rect x="475" y="192" width="95" height="57" fill="#1F7144"/>
-              <path d="M361 116H456V173H361V116Z" fill="#1F7144"/>
-              <rect x="361" y="420" width="95" height="57" fill="#1F7144"/>
-              <path d="M608 68.5C608 63.2533 612.253 59 617.5 59C622.747 59 627 63.2533 627 68.5V524.5C627 529.747 622.747 534 617.5 534C612.253 534 608 529.747 608 524.5V68.5Z" fill="#1F7144"/>
-              <rect x="266" y="173" width="190" height="247" fill="white"/>
-              <ellipse cx="202" cy="360.5" rx="25" ry="28.5" fill="white"/>
-              <ellipse cx="202" cy="232.5" rx="25" ry="28.5" fill="white"/>
-              <path d="M114 282L266 268V325L114 311V282Z" fill="white"/>
-              <path d="M329.234 192V401H289.223V226.505H266V192H329.234Z" fill="#1F7144"/>
-              <path d="M386.33 192H420.466C444.155 192 456 204.049 456 228.148V364.524C456 388.841 444.155 401 420.466 401H388.009C364.32 401 352.475 388.841 352.475 364.524V337.577H391.367V358.28C391.367 363.757 393.885 366.495 398.921 366.495H409.554C414.403 366.495 416.828 363.757 416.828 358.28V318.517H386.33C362.641 318.517 350.796 306.468 350.796 282.369V228.148C350.796 204.049 362.641 192 386.33 192ZM397.522 286.313H416.828V234.72C416.828 229.243 414.403 226.505 409.554 226.505H397.522C392.486 226.505 389.968 229.243 389.968 234.72V278.097C389.968 281.165 390.527 283.355 391.647 284.67C392.766 285.765 394.724 286.313 397.522 286.313Z" fill="#1F7144"/>
+            <svg className="w-6 h-6 drop-shadow-sm" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="361" y="78" width="247" height="437" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+              <path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="342" y="515" width="285" height="19" rx="9.5" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="342" y="59" width="285" height="19" rx="9.5" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="475" y="116" width="95" height="57" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="475" y="268" width="95" height="57" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="475" y="420" width="95" height="57" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="475" y="344" width="95" height="57" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="475" y="192" width="95" height="57" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <path d="M361 116H456V173H361V116Z" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="361" y="420" width="95" height="57" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <path d="M608 68.5C608 63.2533 612.253 59 617.5 59C622.747 59 627 63.2533 627 68.5V524.5C627 529.747 622.747 534 617.5 534C612.253 534 608 529.747 608 524.5V68.5Z" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <rect x="266" y="173" width="190" height="247" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+              <ellipse cx="202" cy="360.5" rx="25" ry="28.5" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+              <ellipse cx="202" cy="232.5" rx="25" ry="28.5" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+              <path d="M114 282L266 268V325L114 311V282Z" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
+              <path d="M329.234 192V401H289.223V226.505H266V192H329.234Z" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
+              <path d="M386.33 192H420.466C444.155 192 456 204.049 456 228.148V364.524C456 388.841 444.155 401 420.466 401H388.009C364.32 401 352.475 388.841 352.475 364.524V337.577H391.367V358.28C391.367 363.757 393.885 366.495 398.921 366.495H409.554C414.403 366.495 416.828 363.757 416.828 358.28V318.517H386.33C362.641 318.517 350.796 306.468 350.796 282.369V228.148C350.796 204.049 362.641 192 386.33 192ZM397.522 286.313H416.828V234.72C416.828 229.243 414.403 226.505 409.554 226.505H397.522C392.486 226.505 389.968 229.243 389.968 234.72V278.097C389.968 281.165 390.527 283.355 391.647 284.67C392.766 285.765 394.724 286.313 397.522 286.313Z" fill={isDarkModeActive ? 'white' : '#1F7144'}/>
             </svg>
-            <span className="font-bold text-[#1F7144]">teslimolan.com</span>
+            <span className={`font-bold transition-colors duration-300 ${isDarkModeActive ? 'text-white' : 'text-[#1F7144]'}`}>teslimolan.com</span>
           </div>
           <p className="text-sm text-gray-500">© 2026 teslimolan.com Tüm hakları saklıdır.</p>
         </div>
@@ -3594,7 +3598,7 @@ export default function App() {
             </div>
             <div className="p-6 space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-gray-400 tracking-wider">İkon & Buton Metni</label>
+                <label className="text-xs font-bold text-gray-400 tracking-wider">İKON & BUTON METNİ</label>
                 <div className="flex gap-2">
                   <div className="relative">
                     <button 
@@ -3634,7 +3638,7 @@ export default function App() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-gray-400 tracking-wider">Link</label>
+                <label className="text-xs font-bold text-gray-400 tracking-wider">LİNK</label>
                 <input 
                   type="text"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 bg-white/50 transition-all"
@@ -3646,7 +3650,7 @@ export default function App() {
               {blocks.find(b => b.id === editingButtonBlockId)?.type !== 'button' && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-gray-400 tracking-wider">Buton Konumu</label>
+                    <label className="text-xs font-bold text-gray-400 tracking-wider">BUTON KONUMU</label>
                     <div className="flex gap-2">
                       <button 
                         onClick={() => setDraftButton({ ...draftButton, position: 'bottom' })}
@@ -3684,9 +3688,9 @@ export default function App() {
                         closeButtonModal();
                       }
                     }}
-                    className="text-red-500 hover:text-red-700 text-sm font-bold uppercase tracking-wider"
+                    className="text-red-500 hover:text-red-700 text-sm font-bold tracking-wider"
                   >
-                    Butonu Sil
+                    BUTONU SİL
                   </button>
                 )}
               </div>
@@ -3730,7 +3734,7 @@ export default function App() {
             </div>
             <div className="p-6 space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-gray-400 tracking-wider">EXCEL VEYA GOOGLE SHEETS VERİSİ</label>
+                <label className="text-xs font-bold text-gray-400 tracking-wider">EXCEL VEYA GOOGLE SHEETS VERİSİ</label>
                 <textarea 
                   className="w-full h-[95px] border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 bg-white/50 transition-all font-mono text-xs"
                   placeholder="Yapıştır"

@@ -129,12 +129,21 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 // Başlığı URL/ID dostu hale getiren yardımcı fonksiyon
 const slugify = (text: string) => {
-  const trMap: { [key: string]: string } = {
-    'ç': 'c', 'Ç': 'c', 'ğ': 'g', 'Ğ': 'g', 'ş': 's', 'Ş': 's',
-    'ü': 'u', 'Ü': 'u', 'ı': 'i', 'İ': 'i', 'ö': 'o', 'Ö': 'o'
+  let str = text;
+  // Türkçe karakterleri önce doğrudan dönüştürelim (böylece toLowerCase() 'İ'yi 'i\u0307'ye çevirip bozmaz)
+  const chars: { [key: string]: string } = {
+    'Ç': 'c', 'ç': 'c',
+    'Ğ': 'g', 'ğ': 'g',
+    'İ': 'i', 'ı': 'i',
+    'I': 'i',
+    'Ö': 'o', 'ö': 'o',
+    'Ş': 's', 'ş': 's',
+    'Ü': 'u', 'ü': 'u'
   };
-  return text.toLowerCase()
-    .replace(/[çğşüıö]/g, (match) => trMap[match])
+  
+  str = str.replace(/[ÇçĞğİıIÖöŞşÜü]/g, (match) => chars[match]);
+  
+  return str.toLowerCase()
     .replace(/[\s\W-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 };
