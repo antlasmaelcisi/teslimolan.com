@@ -1,14 +1,23 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+import {defineConfig} from 'vite';
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+    build: {
+      rollupOptions: {
+        output: {
+          // Kütüphaneleri ayrı dosyalara böl: site kodu değiştiğinde ziyaretçiler
+          // bunları tarayıcı önbelleğinden kullanmaya devam eder
+          manualChunks(id) {
+            if (id.includes('node_modules/@firebase/') || id.includes('node_modules/firebase/')) return 'firebase';
+            if (id.includes('node_modules/react') || id.includes('node_modules/scheduler/')) return 'react';
+            if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion/')) return 'motion';
+          },
+        },
+      },
     },
     resolve: {
       alias: {

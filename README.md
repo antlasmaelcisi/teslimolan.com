@@ -1,20 +1,20 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# teslimolan.com
 
-# Run and deploy your AI Studio app
+[teslimolan.com](https://teslimolan.com) sitesinin kaynak kodu. React + Vite ile yazılmış bir blog uygulamasıdır. Yazılar Firebase Firestore'da tutulur ve `/admin` panelinden düzenlenir. Site Vercel üzerinde yayınlanır.
 
-This contains everything you need to run your app locally.
+## Yerelde çalıştırma
 
-View your app in AI Studio: https://ai.studio/apps/ed6e5b0c-03ec-44c8-bb14-d60764ba17f2
+**Gereksinim:** Node.js
 
-## Run Locally
+1. Bağımlılıkları kurun: `npm install`
+2. Geliştirme sunucusunu başlatın: `npm run dev`
+3. Tarayıcıda `http://localhost:3000` adresini açın.
 
-**Prerequisites:**  Node.js
+## Yapı
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- `src/App.tsx`: Okuyucu sayfaları ve admin editörü
+- `src/lib/firebase.ts`: Firebase bağlantısı, giriş ve yazı kaydetme işlemleri
+- `src/lib/cleanTableHtml.ts`: Google Sheets'ten yapıştırılan tablolardaki gereksiz biçimlendirmeyi temizler
+- `api/render.ts`: Vercel fonksiyonu. Her sayfa isteğinde yazının başlığını, açıklamasını ve görselini HTML'e ekler (Google ve sosyal medya önizlemeleri için).
+- `api/sitemap.ts`: Vercel fonksiyonu. Yayınlanmış yazılardan `/sitemap.xml` site haritasını oluşturur
+- `firestore.rules`: Veritabanı güvenlik kuralları

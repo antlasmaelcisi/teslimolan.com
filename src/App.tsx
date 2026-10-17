@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { auth, signInWithGoogle, checkIsAdmin, subscribeToBlogs, saveBlog, deleteBlogFromFirebase } from './lib/firebase';
+import { auth, signInWithGoogle, checkIsAdmin, subscribeToBlogs, fetchPublishedBlogSummaries, fetchBlog, saveBlog, deleteBlogFromFirebase } from './lib/firebase';
+import { cleanTableCellHtml } from './lib/cleanTableHtml';
 import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
 
@@ -123,6 +124,8 @@ interface Blog {
   createdAt: any;
   updatedAt: any;
   authorEmail?: string;
+  // Ana sayfa kartındaki görsel. Ziyaretçilere gelen özet listede content bulunmaz, kart bunu kullanır.
+  coverImage?: string;
 }
 
 type Tab = 'home' | 'create';
@@ -270,7 +273,17 @@ const getTableCellAlignment = (cellHtml: string) => {
   return match ? (match[1].toLowerCase() as 'left' | 'center' | 'right' | 'justify') : 'left';
 };
 
+// Yazının ilk hero ya da görsel bloğundaki resim; yoksa boş metin
+const getCoverImageFromBlocks = (blocks: Block[]) => {
+  const heroBlock = blocks.find(b => b.type === 'hero' && b.imageUrl);
+  if (heroBlock?.imageUrl) return heroBlock.imageUrl;
+  const imageBlock = blocks.find(b => b.type === 'image' && b.imageUrl);
+  return imageBlock?.imageUrl || '';
+};
+
 const getBlogDisplayImage = (blog: Blog) => {
+  if (blog.coverImage) return blog.coverImage;
+  if (blog.coverImage === '' || blog.content === undefined) return `https://picsum.photos/seed/${blog.id}/800/400`;
   try {
     const blocks = Array.isArray(blog.content) ? blog.content : JSON.parse(blog.content);
     if (!Array.isArray(blocks)) return `https://picsum.photos/seed/${blog.id}/800/400`;
@@ -333,7 +346,7 @@ const HeroImage = ({ src, viewMode }: { src: string, viewMode: 'read' | 'edit' }
   
   if (viewMode === 'edit') {
     return (
-      <img src={src} className="absolute inset-0 w-full h-full object-cover" alt="Hero" referrerPolicy="no-referrer" />
+      <img src={src} className="absolute inset-0 w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
     );
   }
   
@@ -341,8 +354,9 @@ const HeroImage = ({ src, viewMode }: { src: string, viewMode: 'read' | 'edit' }
     <motion.img 
       style={{ y, scale }}
       src={src} 
-      className="absolute inset-0 w-full h-full object-cover origin-center" 
-      alt="Hero" 
+      className="absolute inset-0 w-full h-full object-cover origin-center"
+      alt=""
+      fetchPriority="high"
       referrerPolicy="no-referrer" 
     />
   );
@@ -458,9 +472,9 @@ const Login = ({ onLoginSuccess, isDarkMode }: { onLoginSuccess: () => void, isD
 };
 
 const BlogSkeleton = () => (
-  <div className="blogger-card overflow-hidden flex flex-col animate-pulse" style={{ height: '278.9px' }}>
-    <div className="h-44 bg-gray-200" />
-    <div className="p-5 flex-1 flex flex-col">
+  <div className="blogger-card overflow-hidden flex flex-col animate-pulse">
+    <div className="h-40 bg-gray-200" />
+    <div className="p-card-sm flex-1 flex flex-col">
       <div className="h-6 bg-gray-200 rounded w-3/4 mb-4" />
       <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -635,6 +649,11 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Sekme başlığını açık olan yazıya göre güncelle
+  useEffect(() => {
+    document.title = viewingBlog ? `${viewingBlog.title} – teslimolan.com` : 'teslimolan.com';
+  }, [viewingBlog]);
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
@@ -835,17 +854,56 @@ export default function App() {
   useEffect(() => {
     if (isAuthLoading) return;
 
-    const unsubscribe = subscribeToBlogs((data) => {
-      const processed = data.map(blog => ({
-        ...blog,
-        updatedAt: blog.updatedAt?.toDate ? blog.updatedAt.toDate().toISOString() : (blog.updatedAt || new Date().toISOString()),
-        createdAt: blog.createdAt?.toDate ? blog.createdAt.toDate().toISOString() : (blog.createdAt || new Date().toISOString()),
-      }));
-      setBlogs(processed);
-      setIsLoading(false);
-    }, isAdmin);
-    return () => unsubscribe();
+    const normalizeDates = (blog: any) => ({
+      ...blog,
+      updatedAt: blog.updatedAt?.toDate ? blog.updatedAt.toDate().toISOString() : (blog.updatedAt || new Date().toISOString()),
+      createdAt: blog.createdAt?.toDate ? blog.createdAt.toDate().toISOString() : (blog.createdAt || new Date().toISOString()),
+    });
+
+    // Admin editör için tüm yazıları tam içerikleriyle canlı takip eder
+    if (isAdmin) {
+      const unsubscribe = subscribeToBlogs((data) => {
+        setBlogs(data.map(normalizeDates));
+        setIsLoading(false);
+      }, true);
+      return () => unsubscribe();
+    }
+
+    // Ziyaretçiler sadece kart bilgilerini indirir; yazının içeriği açılınca ayrıca yüklenir
+    let cancelled = false;
+    (async () => {
+      try {
+        const summaries = await fetchPublishedBlogSummaries();
+        // coverImage alanı eklenmeden önce kaydedilmiş yazıların görselini bulmak için tam belgeyi çek
+        const withCovers = await Promise.all(summaries.map(async (summary) => {
+          if (summary.coverImage !== undefined) return summary;
+          const full = await fetchBlog(summary.id).catch(() => null);
+          return full ? { ...summary, content: full.content } : summary;
+        }));
+        if (!cancelled) setBlogs(withCovers.map(normalizeDates));
+      } catch (error) {
+        console.error('Blog listesi yüklenemedi:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [isAdmin, isAuthLoading]);
+
+  // Özet listeden açılan yazının içeriğini yükle
+  useEffect(() => {
+    if (!viewingBlog || viewingBlog.content !== undefined) return;
+    const blogId = viewingBlog.id;
+    let cancelled = false;
+    fetchBlog(blogId)
+      .then(full => {
+        if (cancelled || !full) return;
+        setViewingBlog(prev => (prev?.id === blogId ? { ...prev, content: full.content } : prev));
+        setBlogs(prev => prev.map(b => (b.id === blogId ? { ...b, content: full.content } : b)));
+      })
+      .catch(error => console.error('Yazı yüklenemedi:', error));
+    return () => { cancelled = true; };
+  }, [viewingBlog]);
 
   useEffect(() => {
     const handleMouseUp = () => {
@@ -1319,7 +1377,7 @@ export default function App() {
               content = `<div style="${wrapperStyle}">${content}</div>`;
             }
 
-            rows[rowIndex].cells[colIndex] = content;
+            rows[rowIndex].cells[colIndex] = cleanTableCellHtml(content);
 
             if (rowspan > 1 || colspan > 1) {
               mergedCells.push({
@@ -1778,7 +1836,7 @@ export default function App() {
     return (
       <div className="relative group/table-wrapper" onClick={(e) => e.stopPropagation()}>
         <div className="w-full overflow-x-auto scrollbar-thin rounded-xl">
-          <table className={`min-w-full table-fixed border-collapse border border-gray-300 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} shadow-sm text-[12pt] font-sans`}>
+          <table className={`min-w-full table-fixed border-collapse border border-gray-300 ${block.tableTransparent ? 'bg-transparent' : 'bg-white'} shadow-sm text-base font-sans`}>
           <thead>
             <tr className="bg-gray-100">
               {(block.data.rows[0]?.cells || []).map((_, idx) => (
@@ -1903,7 +1961,7 @@ export default function App() {
                           onChange={(html) => updateTableCell(block.id, rowIdx, cellIdx, html)}
                           placeholder="Metin yazmak için çift tıklayın..."
                           className={`w-full bg-transparent border-none focus:outline-none p-0 min-h-[1.5em] font-sans text-${getTableCellAlignment(cell)} ${editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx ? 'cursor-text' : 'cursor-default select-none pointer-events-none'}`}
-                          style={{ color: block.textColor || '#000000', fontSize: '12pt' }}
+                          style={{ color: block.textColor || '#000000', fontSize: '16px' }}
                           onFocus={() => {
                             setActiveBlockId(block.id);
                             setEditingCell({rowIdx, cellIdx});
@@ -1954,7 +2012,7 @@ export default function App() {
                         onChange={(html) => updateTableCell(block.id, rowIdx, cellIdx, html)}
                         placeholder="Metin yazmak için çift tıklayın..."
                         className={`w-full bg-transparent border-none focus:outline-none p-0 min-h-[1.5em] font-sans text-${getTableCellAlignment(cell)} ${editingCell?.rowIdx === rowIdx && editingCell?.cellIdx === cellIdx ? 'cursor-text' : 'cursor-default select-none pointer-events-none'}`}
-                        style={{ color: block.textColor || '#000000', fontSize: '12pt' }}
+                        style={{ color: block.textColor || '#000000', fontSize: '16px' }}
                         onFocus={() => {
                           setActiveBlockId(block.id);
                           setEditingCell({rowIdx, cellIdx});
@@ -2045,13 +2103,13 @@ export default function App() {
                   updateBlock(block.id, { notes: newNotes });
                 }}
                 placeholder="Metin yazmak için tıklayın..."
-                className={`w-full min-h-[1.5em] text-[12pt] leading-relaxed focus:outline-none prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${note.alignment || 'left'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`}
+                className={`w-full min-h-[1.5em] text-base leading-relaxed focus:outline-none prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${note.alignment || 'left'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`}
                 onFocus={() => { setActiveBlockId(block.id); setActiveNoteIndex(nIdx); setSelectedCells([]); }}
                 isBold={isStickyBold}
                 isItalic={isStickyItalic}
                 isUnderline={isStickyUnderline}
                 currentColor={lastSelectedColor}
-                style={{ fontSize: '12pt' }}
+                style={{ fontSize: '16px' }}
               />
             </div>
             <button 
@@ -2078,7 +2136,7 @@ export default function App() {
     return (
       <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200'} shadow-sm scrollbar-thin`}>
         <table 
-          className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-[12pt] font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
+          className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-base font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
           style={{ '--mobile-min-width': colCount > 2 ? `${colCount * 140}px` : '100%' } as React.CSSProperties}
         >
           <colgroup>
@@ -2141,7 +2199,7 @@ export default function App() {
             <div className="shrink-0 text-gray-400 mt-0.5 select-none">
               <Info size={16} className="mt-[2px]" />
             </div>
-            <div className={`flex-1 prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-[12pt] font-normal font-sans leading-relaxed text-${note.alignment || 'justify'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`}>
+            <div className={`flex-1 prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-base font-normal font-sans leading-relaxed text-${note.alignment || 'justify'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`}>
               {note.link ? (
                 <a 
                   href={note.link} 
@@ -2183,8 +2241,8 @@ export default function App() {
           sel?.removeAllRanges();
           sel?.addRange(range);
         }}
-        className={`w-full min-h-[1.5em] text-[12pt] leading-relaxed focus:outline-none prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${block.alignment || 'justify'} ${block.background === 'dark' ? 'prose-invert' : ''}`}
-        style={{ color: block.textColor, fontSize: '12pt' }}
+        className={`w-full min-h-[1.5em] text-base leading-relaxed focus:outline-none prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${block.alignment || 'justify'} ${block.background === 'dark' ? 'prose-invert' : ''}`}
+        style={{ color: block.textColor, fontSize: '16px' }}
         onFocus={() => { setActiveBlockId(block.id); setActiveNoteIndex(null); setSelectedCells([]); }}
         isBold={isStickyBold}
         isItalic={isStickyItalic}
@@ -2202,8 +2260,8 @@ export default function App() {
     
     return (
       <div 
-        className={`prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${block.alignment || 'justify'} ${block.background === 'dark' ? 'prose-invert' : ''} text-[12pt] leading-relaxed`} 
-        style={{ color: block.textColor, fontSize: '12pt' }}
+        className={`prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${block.alignment || 'justify'} ${block.background === 'dark' ? 'prose-invert' : ''} text-base leading-relaxed`} 
+        style={{ color: block.textColor, fontSize: '16px' }}
         dangerouslySetInnerHTML={{ 
           __html: block.content
         }} 
@@ -2254,13 +2312,14 @@ export default function App() {
     
     return (
       <div className={isBottom 
-        ? `w-full flex flex-wrap justify-center gap-4 mt-2 mb-6 md:my-2` 
-        : `w-full md:w-auto flex flex-row md:flex-col flex-wrap items-center md:items-start justify-center md:justify-start gap-4 md:gap-2 shrink-0 mt-2 mb-6 md:mt-1 md:mb-0`}>
+        ? `w-full flex flex-wrap justify-center gap-4`
+        : `w-full md:w-auto flex flex-row md:flex-col flex-wrap items-center md:items-start justify-center md:justify-start gap-4 md:gap-2 shrink-0`}>
         {block.hasButton && (
           <a 
-            href={block.buttonLink} 
+            href={block.buttonLink}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={block.buttonText || 'İncele'}
             className={`sites-button-small group ${getButtonColorClass(block.buttonIcon)} ${!isBottom ? 'sites-button-side' : ''}`}>
             {renderButtonIcon(block.buttonIcon)}
             <span className="transition-all duration-200 hidden md:inline">{block.buttonText || 'İncele'}</span>
@@ -2269,9 +2328,10 @@ export default function App() {
         {block.buttons?.map((btn, idx) => (
           <a 
             key={idx}
-            href={btn.link} 
+            href={btn.link}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={btn.text}
             className={`sites-button-small group ${getButtonColorClass(btn.icon)} ${!isBottom ? 'sites-button-side' : ''}`}>
             {renderButtonIcon(btn.icon)}
             <span className="transition-all duration-200 hidden md:inline">{btn.text}</span>
@@ -2347,10 +2407,12 @@ export default function App() {
             : rawContent || []);
       }
       
+      const content = JSON.parse(JSON.stringify(contentToSave));
       const payload = {
         title: blogToSave.title || 'Adsız Blog',
         // Strip undefined/null-like fields to avoid Firestore error via deep clone
-        content: JSON.parse(JSON.stringify(contentToSave)),
+        content,
+        coverImage: Array.isArray(content) ? getCoverImageFromBlocks(content) : '',
         status,
         authorEmail: currentUser.email,
         updatedAt: new Date().toISOString()
@@ -2422,8 +2484,8 @@ export default function App() {
                 updateBlock(block.id, { noteContent: html });
               }}
               placeholder="Metin yazmak için tıklayın..."
-              className={`w-full min-h-[1.5em] text-[12pt] leading-relaxed focus:outline-none prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${block.alignment || 'justify'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`}
-              style={{ fontSize: '12pt' }}
+              className={`w-full min-h-[1.5em] text-base leading-relaxed focus:outline-none prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-${block.alignment || 'justify'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`}
+              style={{ fontSize: '16px' }}
               onFocus={() => { setActiveBlockId(block.id); setActiveNoteIndex(null); setSelectedCells([]); }}
               isBold={isStickyBold}
               isItalic={isStickyItalic}
@@ -2432,7 +2494,7 @@ export default function App() {
             />
           </div>
         ) : (
-          <div className={`flex-1 prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-[12pt] font-normal font-sans leading-relaxed text-${block.alignment || 'justify'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`} dangerouslySetInnerHTML={{ __html: block.noteContent }} />
+          <div className={`flex-1 prose prose-sm prose-p:first:mt-0 prose-p:last:mb-0 max-w-none text-base font-normal font-sans leading-relaxed text-${block.alignment || 'justify'} text-[#A9A9A9] ${block.background === 'dark' ? 'prose-invert' : ''}`} dangerouslySetInnerHTML={{ __html: block.noteContent }} />
         )}
       </div>
     );
@@ -2502,18 +2564,18 @@ export default function App() {
           }
           
           const blockWrapperClass = isModern 
-            ? `${bgClass} rounded-2xl shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-6 overflow-hidden w-full`
-            : `${bgClass} w-full ${block.type === 'text' || block.type === 'note' ? (isDarkModeActive ? 'border-b border-white/10' : 'border-b border-gray-100/30') : ''}`;
-            
-          const blockInnerClass = isModern ? "p-10" : "max-w-4xl mx-auto p-10";
+            ? `${bgClass} rounded-card shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-section overflow-hidden w-full`
+            : `${bgClass} w-full ${block.type === 'text' || block.type === 'note' || block.type === 'table' ? (isDarkModeActive ? 'border-b border-white/10' : 'border-b border-gray-100/30') : ''}`;
+
+          const blockInnerClass = isModern ? "p-card-sm md:p-card" : "max-w-page mx-auto p-card-sm md:p-card";
 
           if (block.type === 'hero') return (
-            <div key={block.id} className={`relative h-[400px] flex items-center justify-center overflow-hidden ${isModern ? `rounded-2xl shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-6 ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}` : ''}`}>
+            <div key={block.id} className={`relative h-60 md:h-[400px] flex items-center justify-center overflow-hidden ${isModern ? `rounded-card shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-section ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}` : ''}`}>
               <HeroImage src={block.imageUrl!} viewMode={editingBlog ? 'edit' : 'read'} />
               <div className="absolute inset-0 bg-black/40" />
               <div className={`relative z-10 text-center text-white px-4 ${isModern ? 'w-full' : 'w-full max-w-4xl'}`}>
                 {renderBlockContent(block, (
-                  <h1 className="text-5xl font-bold mb-4 font-sans leading-tight" style={{ color: block.textColor }}>{block.content}</h1>
+                  <h1 className="text-2xl md:text-5xl font-bold mb-4 font-sans leading-tight" style={{ color: block.textColor }}>{block.content}</h1>
                 ), false)}
               </div>
             </div>
@@ -2522,10 +2584,10 @@ export default function App() {
           if (block.type === 'heading') return (
             <div key={block.id} className={blockWrapperClass}>
               <div className={blockInnerClass}>
-                <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
+                <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-baseline justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, (
-                      <h2 className={`text-lg font-bold font-sans tracking-tight text-${block.alignment || 'justify'}`} style={{ color: block.textColor }}>{block.content}</h2>
+                      <h2 className={`text-xl font-bold font-sans tracking-tight text-${block.alignment || 'justify'}`} style={{ color: block.textColor }}>{block.content}</h2>
                     ), false)}
                   </div>
                   {renderButtonsPublic(block)}
@@ -2549,8 +2611,8 @@ export default function App() {
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, (
                       <div className={`flex flex-col gap-6 items-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}`}>
-                        <img src={block.imageUrl} className="max-w-full rounded-2xl apple-shadow border border-white/20" alt="Content" referrerPolicy="no-referrer" />
-                        {block.caption && <p className={`text-[12pt] italic font-medium ${block.background === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{block.caption}</p>}
+                        <img src={block.imageUrl} className="max-w-full rounded-2xl apple-shadow border border-white/20" alt={block.caption || viewingBlog?.title || ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+                        {block.caption && <p className={`text-base italic font-medium ${block.background === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{block.caption}</p>}
                       </div>
                     ), false)}
                   </div>
@@ -2563,7 +2625,7 @@ export default function App() {
           if (block.type === 'text') return (
             <div key={block.id} className={blockWrapperClass}>
               <div className={blockInnerClass}>
-                <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
+                <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-baseline justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, renderTextPublic(block), false)}
                   </div>
@@ -2574,8 +2636,8 @@ export default function App() {
           );
           if (block.type === 'button') return (
             <div key={block.id} className={blockWrapperClass}>
-              <div className={isModern ? `p-[38px] flex justify-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}` : `max-w-4xl mx-auto p-[38px] flex justify-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}`}>
-                <a href={block.link} target="_blank" rel="noopener noreferrer" className={`sites-button ${getButtonColorClass(block.buttonIcon)}`}>
+              <div className={`${blockInnerClass} flex justify-${block.alignment === 'center' ? 'center' : (block.alignment === 'right' ? 'end' : 'start')}`}>
+                <a href={block.link} target="_blank" rel="noopener noreferrer" aria-label={block.content} className={`sites-button ${getButtonColorClass(block.buttonIcon)}`}>
                   {renderButtonIcon(block.buttonIcon)}
                   <span className={block.buttonIcon ? "hidden md:inline" : ""}>{block.content}</span>
                 </a>
@@ -2586,7 +2648,7 @@ export default function App() {
           if (block.type === 'note') return (
             <div key={block.id} className={blockWrapperClass}>
               <div className={blockInnerClass}>
-                <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-10"}>
+                <div className={block.buttonPosition === 'bottom' ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-stretch md:items-baseline justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition !== 'bottom' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, null, false)}
                   </div>
@@ -2597,9 +2659,9 @@ export default function App() {
           );
           
           if (block.type === 'table' && block.data) return (
-            <div key={block.id} className={isModern ? `w-full mb-12 md:mb-6` : `${bgClass} w-full py-12 md:py-10`}>
-              <div className={isModern ? "" : "max-w-4xl mx-auto px-10"}>
-                <div className={block.buttonPosition === 'bottom' || block.buttonPosition === undefined ? "flex flex-col gap-1 md:gap-8" : "flex flex-col md:flex-row items-start justify-between gap-6 md:gap-10"}>
+            <div key={block.id} className={blockWrapperClass}>
+              <div className={blockInnerClass}>
+                <div className={block.buttonPosition === 'bottom' || block.buttonPosition === undefined ? "flex flex-col gap-6" : "flex flex-col md:flex-row items-start justify-between gap-6 md:gap-10"}>
                   <div className={`flex-1 min-w-0 ${block.buttonPosition === 'right' && ((block.buttons && block.buttons.length > 0) || block.hasButton) ? 'w-full md:max-w-[630px]' : ''}`}>
                     {renderBlockContent(block, renderTextPublic(block), false)}
                   </div>
@@ -2676,7 +2738,7 @@ export default function App() {
                 </svg>
               </div>
             )}
-            <span className="font-semibold text-[15px] tracking-tight">{notification.message}</span>
+            <span className="font-semibold text-base tracking-tight">{notification.message}</span>
             <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-gray-300/50" />
             </motion.div>
           </div>
@@ -2684,18 +2746,18 @@ export default function App() {
       </AnimatePresence>
       {/* Header */}
       {!editingBlog && (
-        <header className={`apple-glass border-b ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} z-[70] w-full fixed left-0 right-0 transition-all duration-300 shadow-sm ${isHeaderVisible ? 'top-0' : '-top-16'}`} style={{ willChange: 'transform', height: '64px' }}>
-          <main className="w-full max-w-4xl mx-auto px-4 sm:px-0 flex items-center justify-between relative h-[64px]">
-            <div 
-              className="flex items-center justify-between leading-none h-[42px] w-[896px] max-w-full z-[80]"
+        <header className={`apple-glass border-x-0! border-t-0! border-b ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} z-[70] w-full fixed left-0 right-0 transition-all duration-300 shadow-sm ${isHeaderVisible ? 'top-0' : '-top-16'}`} style={{ willChange: 'transform', height: '64px' }}>
+          <main className="w-full max-w-page mx-auto px-4 sm:px-0 flex items-center justify-between relative h-16">
+            <div
+              className="flex items-center justify-between leading-none h-10 w-full z-[80] pointer-events-none"
             >
-              <div 
-                className="flex items-center gap-3 cursor-pointer group leading-none h-[42px]"
+              <div
+                className="flex items-center gap-3 cursor-pointer group leading-none h-10 pointer-events-auto"
                 onClick={() => { 
                   navigate('/');
                 }}
               >
-                <svg className="w-[42.7px] h-[40px] drop-shadow-sm mt-[2px]" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg className="h-10 w-auto drop-shadow-sm" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="361" y="78" width="247" height="437" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
                   <path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
                   <rect x="342" y="515" width="285" height="19" rx="9.5" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
@@ -2720,11 +2782,11 @@ export default function App() {
                 )}
               </div>
 
-              <nav className="flex items-center gap-1 sm:gap-2">
+              <nav className="flex items-center gap-1 sm:gap-2 pointer-events-auto">
                 <div className="relative layout-menu-container">
                   <button 
                     onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
-                    className={`flex items-center justify-center gap-1.5 px-2.5 h-[28px] ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg border transition-colors shadow-sm`}
+                    className={`flex items-center justify-center gap-2 px-3 h-control ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg border transition-colors shadow-sm`}
                   >
                     <Layout size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
                     <Sun size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
@@ -2802,7 +2864,7 @@ export default function App() {
                     onClick={() => { 
                       navigate(`/edit/${viewingBlog.id}`);
                     }}
-                    className={`w-[28px] h-[28px] flex items-center justify-center ${isDarkModeActive ? 'bg-[#1c1c1e] text-blue-400 border-white/10 hover:bg-white/5' : 'bg-white text-blue-600 border-gray-200 hover:bg-gray-50'} rounded-lg border shadow-sm transition-all duration-300 active:scale-95`}
+                    className={`w-control h-control flex items-center justify-center ${isDarkModeActive ? 'bg-[#1c1c1e] text-blue-400 border-white/10 hover:bg-white/5' : 'bg-white text-blue-600 border-gray-200 hover:bg-gray-50'} rounded-lg border shadow-sm transition-all duration-300 active:scale-95`}
                     title="Düzenle"
                   >
                     <Edit3 size={14} />
@@ -2812,7 +2874,7 @@ export default function App() {
                   <div className="relative admin-menu-container">
                     <button 
                       onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
-                      className={`flex items-center justify-center gap-1 w-[28px] md:w-[98px] h-[28px] ${isDarkModeActive ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 hover:bg-blue-900/50' : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'} rounded-lg text-xs font-semibold border transition-colors shadow-sm mq-640:shadow-none`}
+                      className={`flex items-center justify-center gap-1 w-control md:w-24 h-control ${isDarkModeActive ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 hover:bg-blue-900/50' : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'} rounded-lg text-xs font-semibold border transition-colors shadow-sm mq-640:shadow-none`}
                     >
                       <BadgeCheck size={14} className={isDarkModeActive ? "text-blue-400" : "text-blue-500"} />
                       <span className="hidden md:inline">Admin</span>
@@ -2856,8 +2918,8 @@ export default function App() {
             </div>
 
             {viewingBlog && (
-              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center text-center px-4 overflow-hidden max-w-[160px] xs:max-w-[200px] sm:max-w-[400px] md:max-w-[600px] h-[64px] cursor-default z-10">
-                <h2 className={`text-lg font-bold font-sans truncate w-full ${isDarkModeActive ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center text-center px-4 overflow-hidden max-w-[160px] xs:max-w-[200px] sm:max-w-[400px] md:max-w-[600px] h-16 cursor-text select-text z-10">
+                <h2 className={`text-base md:text-xl font-bold font-sans truncate w-full ${isDarkModeActive ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
                   {viewingBlog.title}
                 </h2>
               </div>
@@ -3031,7 +3093,7 @@ export default function App() {
         </>
       )}
 
-      <main className={`flex-1 w-full mx-auto ${!editingBlog ? 'mt-16' : ''} ${editingBlog ? 'pt-0 pb-8' : `max-w-4xl px-4 sm:px-0 py-8`}`}>
+      <main className={`flex-1 w-full mx-auto ${!editingBlog ? 'mt-16' : ''} ${editingBlog ? 'pt-0 pb-8' : `max-w-page px-4 sm:px-0 py-8`}`}>
           {activeTab === 'home' ? (
             <div
               key="home"
@@ -3040,14 +3102,18 @@ export default function App() {
               {viewingBlog ? (
                 <>
                   <div 
-                    className={`relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-0`}
+                    className={`relative z-10 max-w-page mx-auto w-full`}
                   >
                     <div className="pb-20 bg-transparent">
                       <div className={readingLayout === 'modern' 
                         ? `space-y-6 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}` 
                         : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'} rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} shadow-sm overflow-hidden w-full`
                       }>
-                        {renderBlocks(editingBlog?.id === viewingBlog.id ? blocks : viewingBlog.content)}
+                        {editingBlog?.id === viewingBlog.id ? renderBlocks(blocks) : viewingBlog.content === undefined ? (
+                          <div className="min-h-[40vh] flex items-center justify-center" role="status" aria-label="Yazı yükleniyor">
+                            <div className="w-10 h-10 border-4 border-[#1F7144]/20 border-t-[#1F7144] rounded-full animate-spin" />
+                          </div>
+                        ) : renderBlocks(viewingBlog.content)}
                       </div>
                     </div>
                   </div>
@@ -3068,40 +3134,50 @@ export default function App() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {publishedBlogs.map(blog => (
-                        <article 
+                        <article
                           key={blog.id}
-                          className="blogger-card overflow-hidden flex flex-col cursor-pointer group hover:border-blue-300 transition-all"
-                          onClick={() => navigate(`/${blog.id}`)}
+                          className="blogger-card overflow-hidden relative group hover:border-blue-300 transition-all"
                         >
+                          {isAuthenticated && (
+                            <button
+                              onClick={() => navigate(`/edit/${blog.id}`)}
+                              className="absolute top-3 right-3 w-control h-control flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg shadow-sm text-blue-600 hover:bg-blue-50 transition-all active:scale-90 z-10"
+                              title="Düzenle"
+                              aria-label={`${blog.title} yazısını düzenle`}
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                          )}
+                          <a
+                            href={`/${blog.id}`}
+                            className="flex flex-col h-full"
+                            onClick={(e) => {
+                              // Ctrl/Cmd/orta tık ile yeni sekmede açmaya izin ver
+                              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+                              e.preventDefault();
+                              navigate(`/${blog.id}`);
+                            }}
+                          >
                           <div className={`h-40 ${isDarkModeActive ? 'bg-[#2c2c2e]' : 'bg-gray-100'} relative overflow-hidden`}>
-                            <img 
-                              src={getBlogDisplayImage(blog)} 
+                            <img
+                              src={getBlogDisplayImage(blog)}
                               alt={blog.title}
+                              decoding="async"
+                              fetchPriority="high"
                               className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                               referrerPolicy="no-referrer"
                             />
-                            {isAuthenticated && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/edit/${blog.id}`);
-                                }}
-                                className="absolute top-3 right-3 w-[28px] h-[28px] flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg shadow-sm text-blue-600 hover:bg-blue-50 transition-all active:scale-90 z-10"
-                                title="Düzenle"
-                              >
-                                <Edit3 size={14} />
-                              </button>
-                            )}
                           </div>
-                          <div className="p-5 flex-1 flex flex-col">
+                          <div className="p-card-sm flex-1 flex flex-col">
                             <h3 className={`text-xl font-bold mb-4 line-clamp-2 font-sans group-hover:text-blue-600 transition-colors ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>{blog.title}</h3>
                             <div className={`flex items-center justify-between mt-auto pt-4 border-t ${isDarkModeActive ? 'border-white/10' : 'border-gray-100'}`}>
-                              <div className="flex items-center gap-2 text-[11px] font-medium text-gray-400">
+                              <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
                                 <Clock size={12} className="text-gray-300" />
                                 {new Date(blog.updatedAt).toLocaleDateString('tr-TR')}
                               </div>
                             </div>
                           </div>
+                          </a>
                         </article>
                       ))}
                     </div>
@@ -3273,7 +3349,7 @@ export default function App() {
                                           html={block.content}
                                           onChange={(html) => updateBlock(block.id, { content: html })}
                                           placeholder="Alt başlık yazın..."
-                                          className={`text-lg font-bold focus:outline-none w-full text-${block.alignment || 'justify'}`}
+                                          className={`text-xl font-bold focus:outline-none w-full text-${block.alignment || 'justify'}`}
                                           onFocus={() => { setActiveBlockId(block.id); setActiveNoteIndex(null); setSelectedCells([]); }}
                                           isBold={isStickyBold}
                                           isItalic={isStickyItalic}
@@ -3376,8 +3452,8 @@ export default function App() {
                                           <input 
                                             type="text"
                                             placeholder="Alt yazı ekle..."
-                                            className={`text-[12pt] italic border-none focus:ring-0 p-0 bg-transparent text-center w-full ${block.background === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}
-                                            style={{ fontSize: '12pt' }}
+                                            className={`text-base italic border-none focus:ring-0 p-0 bg-transparent text-center w-full ${block.background === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}
+                                            style={{ fontSize: '16px' }}
                                             value={block.caption || ''}
                                             onChange={(e) => updateBlock(block.id, { caption: e.target.value })}
                                             onFocus={() => { setActiveBlockId(block.id); setActiveNoteIndex(null); setSelectedCells([]); }}
@@ -3554,9 +3630,8 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      {!viewingBlog && (
         <footer className={`${isDarkModeActive ? 'bg-[#1c1c1e] border-white/10' : 'bg-white border-gray-200'} border-t py-8 mt-auto transition-colors duration-300`}>
-          <div className="max-w-6xl mx-auto px-4 text-center">
+          <div className="max-w-page mx-auto px-4 sm:px-0 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <svg className="w-6 h-6 drop-shadow-sm" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="361" y="78" width="247" height="437" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
@@ -3583,7 +3658,6 @@ export default function App() {
           <p className="text-sm text-gray-500">© 2026 teslimolan.com Tüm hakları saklıdır.</p>
         </div>
       </footer>
-      )}
       {/* Button Edit Modal */}
       {isButtonModalOpen && editingButtonBlockId && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200] p-4 backdrop-blur-md">

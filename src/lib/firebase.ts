@@ -4,7 +4,6 @@ import {
   initializeFirestore, 
   doc, 
   getDoc,
-  getDocFromServer,
   collection, 
   setDoc,
   updateDoc, 
@@ -19,22 +18,8 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId);
+export const db = initializeFirestore(app, {}, firebaseConfig.firestoreDatabaseId);
 export const googleProvider = new GoogleAuthProvider();
-
-async function testConnection() {
-  try {
-    // Attempt to read from a non-existent or restricted document just to test core connection
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error: any) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
-    }
-  }
-}
-testConnection();
 
 export async function checkIsAdmin(email: string | null): Promise<boolean> {
   if (!email) return false;
@@ -78,6 +63,52 @@ export const subscribeToBlogs = (callback: (blogs: any[]) => void, isAdmin: bool
   }, (error) => {
     handleFirestoreError(error, OperationType.LIST, 'blogs');
   });
+};
+
+// Ziyaretçiler için ana sayfa listesi: yazıların sadece kart için gereken alanlarını çeker.
+// Web SDK alan seçimi (projection) desteklemediği için Firestore REST API kullanılıyor.
+const SUMMARY_FIELDS = ['title', 'status', 'createdAt', 'updatedAt', 'coverImage'];
+
+const decodeRestValue = (value: any): any => {
+  if (!value) return undefined;
+  if ('stringValue' in value) return value.stringValue;
+  if ('timestampValue' in value) return value.timestampValue;
+  return undefined;
+};
+
+export const fetchPublishedBlogSummaries = async () => {
+  const { projectId, firestoreDatabaseId, apiKey } = firebaseConfig;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${firestoreDatabaseId}/documents:runQuery?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: 'blogs' }],
+        where: { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: 'published' } } },
+        orderBy: [{ field: { fieldPath: 'updatedAt' }, direction: 'DESCENDING' }],
+        select: { fields: SUMMARY_FIELDS.map(fieldPath => ({ fieldPath })) },
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`Blog listesi alınamadı: ${res.status}`);
+  const rows: any[] = await res.json();
+  return rows
+    .filter(row => row.document)
+    .map(row => {
+      const summary: any = { id: row.document.name.split('/').pop() };
+      for (const field of SUMMARY_FIELDS) {
+        const value = decodeRestValue(row.document.fields?.[field]);
+        if (value !== undefined) summary[field] = value;
+      }
+      return summary;
+    });
+};
+
+// Tek bir yazıyı tüm içeriğiyle getirir (okuma sayfası için)
+export const fetchBlog = async (id: string) => {
+  const snapshot = await getDoc(doc(db, 'blogs', id));
+  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as any : null;
 };
 
 enum OperationType {
@@ -170,11 +201,13 @@ export const saveBlog = async (id: string | null, data: any) => {
 
       // Existing document -> Check if title changed significantly to trigger a rename/move
       const newBaseSlug = slugify(data.title) || 'adsiz-yazi';
-      
+
       // If current ID is not the same as newBaseSlug and doesn't start with newBaseSlug + '-', we rename.
       const isStillCompatible = id === newBaseSlug;
-      
-      if (!isStillCompatible) {
+      // Yayınlanmış bir yazının adresi sabit kalır: başlık değişse de paylaşılmış linkler kırılmasın
+      const wasPublished = blogDoc.data()?.status === 'published';
+
+      if (!isStillCompatible && !wasPublished) {
         // 1. Find a unique new ID
         let finalId = newBaseSlug;
         let counter = 1;

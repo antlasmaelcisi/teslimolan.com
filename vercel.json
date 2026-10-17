@@ -1,5 +1,13 @@
 {
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/render.ts": {
+      "includeFiles": "dist/index.html"
+    }
+  },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/((?!api/).*)", "destination": "/api/render?path=$1" }
   ]
 }

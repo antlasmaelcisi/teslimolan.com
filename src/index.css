@@ -8,6 +8,16 @@
 @theme {
   --font-sans: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
   --font-display: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+
+  /* Ölçü standardı: tüm boşluklar 4px'in katıdır (4 · 8 · 12 · 16 · 24 · 32 · 40 · 48).
+     Yazı boyutları: 12 · 14 · 16 · 20 · 24 · 48 px (text-xs/sm/base/xl/2xl/5xl). */
+  --spacing-control: 2rem;    /* 32px: düğme yüksekliği */
+  --spacing-card: 2.5rem;     /* 40px: kart iç boşluğu (masaüstü) */
+  --spacing-card-sm: 1.5rem;  /* 24px: kart iç boşluğu (mobil ve kompakt kartlar) */
+  --spacing-section: 1.5rem;  /* 24px: kartlar arası */
+  --radius-control: 0.5rem;   /* 8px: düğmeler */
+  --radius-card: 1rem;        /* 16px: kartlar */
+  --container-page: 56rem;    /* 896px: üst bar, içerik ve alt bilgi genişliği */
 }
 
 *, *::before, *::after {
@@ -24,7 +34,7 @@ body {
   --theme-border: rgba(0, 0, 0, 0.05);
   background-color: var(--theme-bg);
   color: var(--theme-text-color);
-  @apply font-sans text-[14px] antialiased;
+  @apply font-sans text-sm antialiased;
   cursor: url('/custom-cursor.svg') 0 0, auto;
 }
 
@@ -184,22 +194,22 @@ body.dark .sites-heading {
 }
 
 .sites-button {
-  @apply text-white font-medium py-2 px-3 md:px-6 rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2 shadow-sm text-center min-w-0 md:min-w-[120px] active:scale-[0.98] hover:brightness-110 active:brightness-90;
+  @apply text-white font-medium py-2 px-3 md:px-6 rounded-control transition-all duration-200 inline-flex items-center justify-center gap-2 shadow-sm text-center min-w-0 md:min-w-[120px] active:scale-[0.98] hover:brightness-110 active:brightness-90;
   text-decoration: none !important;
-  font-size: 12pt;
+  font-size: 16px;
 }
 
 .sites-button-small {
-  @apply text-white px-3 py-1.5 rounded-md transition-all duration-200 inline-flex items-center justify-center shadow-sm gap-2 whitespace-nowrap font-medium active:scale-[0.98] hover:brightness-110 active:brightness-90;
+  @apply text-white px-3 py-1.5 rounded-control transition-all duration-200 inline-flex items-center justify-center shadow-sm gap-2 whitespace-nowrap font-medium active:scale-[0.98] hover:brightness-110 active:brightness-90;
   min-width: 0;
   @apply md:min-w-[48px];
-  height: 32px;
-  font-size: 12pt;
+  height: var(--spacing-control);
+  font-size: 16px;
 }
 
 @media (max-width: 767px) {
   .sites-button-small {
-    width: 32px !important;
+    width: var(--spacing-control) !important;
     padding: 0 !important;
     aspect-ratio: 1 / 1;
   }
