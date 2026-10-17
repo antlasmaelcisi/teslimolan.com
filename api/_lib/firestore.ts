@@ -1,8 +1,11 @@
 // Vercel fonksiyonlarının Firestore REST API'si üzerinden yayınlanmış yazıları okuması için
 // ortak yardımcılar. Klasör adı "_" ile başladığı için Vercel bunu ayrı bir fonksiyon yapmaz.
-import firebaseConfig from '../../firebase-applet-config.json';
-
-const { projectId, firestoreDatabaseId, apiKey } = firebaseConfig;
+// Değerler firebase-applet-config.json ile aynıdır (web istemcisine zaten açık, gizli değildir).
+// JSON dosyası burada import edilmiyor: Vercel fonksiyonları saf Node ESM olarak çalışır ve
+// JSON importu ek bir öznitelik ister.
+const projectId = 'gen-lang-client-0560070026';
+const firestoreDatabaseId = 'ai-studio-fa9ae4ff-33e9-4562-b649-7ead8521bd59';
+const apiKey = 'AIzaSyBgATPWbWjLWpdStBd2AM1vKMbGV8c6IvE';
 const DOCUMENTS_URL = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${firestoreDatabaseId}/documents`;
 
 // REST API alanları { stringValue: ... } gibi tipli nesneler olarak döner

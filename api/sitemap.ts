@@ -1,5 +1,5 @@
 // /sitemap.xml: yayınlanmış yazıların listesi. Yeni yazı yayınlandığında kendiliğinden güncellenir.
-import { listPublishedBlogs } from './_lib/firestore';
+import { listPublishedBlogs } from './_lib/firestore.js';
 
 const escapeXml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

@@ -4,7 +4,7 @@
 // vercel.json içindeki rewrite, /api dışındaki tüm sayfa isteklerini buraya yönlendirir.
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { getBlogDocument, str } from './_lib/firestore';
+import { getBlogDocument, str } from './_lib/firestore.js';
 
 const SITE_NAME = 'teslimolan.com';
 const DEFAULT_DESCRIPTION = 'Kuran üzerine incelemeler ve yazılar.';
