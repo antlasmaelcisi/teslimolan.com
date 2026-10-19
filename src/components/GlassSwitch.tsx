@@ -6,6 +6,8 @@ import React from 'react';
 // Durumu perdeler gösterdiği için ayrı bir topuz yok.
 interface GlassSwitchProps {
   isOn: boolean;
+  // Kilitli: perde kapalı kalır, anahtar soluklaşır ve basılamaz (karanlık temada)
+  disabled?: boolean;
   onToggle: () => void;
 }
 
@@ -40,7 +42,7 @@ const OpenDrape = () => (
   </svg>
 );
 
-const GlassSwitch: React.FC<GlassSwitchProps> = ({ isOn, onToggle }) => {
+const GlassSwitch: React.FC<GlassSwitchProps> = ({ isOn, disabled = false, onToggle }) => {
   const motion = 'motion-reduce:transition-none';
   const t = (extra: React.CSSProperties = {}): React.CSSProperties => ({
     transitionTimingFunction: EASE,
@@ -73,9 +75,10 @@ const GlassSwitch: React.FC<GlassSwitchProps> = ({ isOn, onToggle }) => {
       role="switch"
       aria-checked={isOn}
       aria-label="Cam teması"
-      title="Cam teması"
+      title={disabled ? 'Cam teması karanlık temada kullanılamaz' : 'Cam teması'}
+      disabled={disabled}
       onClick={onToggle}
-      className="relative w-[76px] h-[34px] shrink-0 rounded-full overflow-hidden ring-1 ring-black/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className={`relative w-[76px] h-[34px] shrink-0 rounded-full overflow-hidden ring-1 ring-black/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-opacity duration-500 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {drape('left')}
       {drape('right')}

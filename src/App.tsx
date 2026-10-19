@@ -832,16 +832,9 @@ export default function App() {
   const [readingLayout, setReadingLayout] = useState<'modern' | 'classic'>('modern');
   // 'glass': aydınlık temanın üstünde, blokların üst barla aynı cam dolgusunu kullandığı tema
   const [theme, setTheme] = useState<'light' | 'dark' | 'glass'>('light');
-  // Gece anahtarı kapatılınca dönülecek gündüz teması (aydınlık ya da cam)
-  const [lastDayTheme, setLastDayTheme] = useState<'light' | 'glass'>('light');
-  const toggleNight = () => {
-    if (theme === 'dark') {
-      setTheme(lastDayTheme);
-    } else {
-      setLastDayTheme(theme);
-      setTheme('dark');
-    }
-  };
+  // Geceye geçince Cam kapanır (perde kendiliğinden iner); gündüze dönünce
+  // Cam kendiliğinden açılmaz, her zaman düz aydınlık temaya dönülür.
+  const toggleNight = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   // Tema menüsü açıkken Cam anahtarının panel zeminindeki konumunu ölç;
   // zeminde o noktaya anahtar biçiminde bir pencere açılır.
@@ -2939,7 +2932,12 @@ export default function App() {
                             <div className="px-3 py-1.5">
                               {/* Cam, gündüz temasının açılıp kapanan bir türü */}
                               <div ref={glassSlotRef} className="w-[76px] h-[34px]">
-                                <GlassSwitch isOn={theme === 'glass'} onToggle={() => setTheme(theme === 'glass' ? 'light' : 'glass')} />
+                                {/* Karanlık temada perde kilitli: açılamaz */}
+                                <GlassSwitch
+                                  isOn={theme === 'glass'}
+                                  disabled={theme === 'dark'}
+                                  onToggle={() => setTheme(theme === 'glass' ? 'light' : 'glass')}
+                                />
                               </div>
                             </div>
                           </div>
