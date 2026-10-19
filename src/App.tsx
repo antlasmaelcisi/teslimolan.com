@@ -2180,8 +2180,8 @@ export default function App() {
     const colCount = block.data.rows[0]?.cells.length || 0;
 
     return (
-      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200'} shadow-sm scrollbar-thin`}>
-        <table 
+      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : (isGlassActive ? 'apple-glass border-white/20' : 'border-gray-200')} shadow-sm scrollbar-thin`}>
+        <table
           className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent || isGlassActive ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-base font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
           style={{ '--mobile-min-width': colCount > 2 ? `${colCount * 140}px` : '100%' } as React.CSSProperties}
         >
@@ -2599,14 +2599,17 @@ export default function App() {
         
         return parsed.map((block: Block) => {
           let bgClass = '';
-          if (block.background === 'gray') {
+          if (isGlassActive) {
+            // Cam temasında blokların zemin seçimi ne olursa olsun hepsi aynı cam dolguyu kullanır
+            bgClass = 'apple-glass text-gray-900 theme-text-gray';
+          } else if (block.background === 'gray') {
             bgClass = isDarkModeActive ? 'bg-[#2c2c2e] text-white theme-text-white' : 'bg-gray-50 text-gray-900 theme-text-gray';
           } else if (block.background === 'accent') {
             bgClass = isDarkModeActive ? 'bg-blue-900/30 text-blue-100 theme-text-white' : 'bg-blue-50 text-blue-900 theme-text-accent';
           } else if (block.background === 'dark') {
             bgClass = 'bg-gray-900 text-white theme-text-white';
           } else {
-            bgClass = isDarkModeActive ? 'bg-[#1c1c1e] text-white theme-text-white' : (isGlassActive ? 'apple-glass text-gray-900 theme-text-gray' : 'bg-white text-gray-900 theme-text-gray');
+            bgClass = isDarkModeActive ? 'bg-[#1c1c1e] text-white theme-text-white' : 'bg-white text-gray-900 theme-text-gray';
           }
 
           const blockWrapperClass = isModern
