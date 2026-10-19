@@ -474,39 +474,39 @@ const Login = ({ onLoginSuccess, isDarkMode }: { onLoginSuccess: () => void, isD
   );
 };
 
+// İskelet "hologramları" üst barla aynı cam dolgusunu (apple-glass) kullanır;
+// aydınlık ve karanlık temadaki opaklık böylece üst barla birebir aynı kalır.
+const GLASS = 'apple-glass';
+
 // Yazı yüklenirken blokların yerini tutan iskelet: banner, metin ve tablo blokları
-const ReaderSkeleton = ({ isDark }: { isDark: boolean }) => {
-  const bar = isDark ? 'bg-white/10' : 'bg-gray-200';
-  const panel = isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200';
-  return (
-    <div role="status" aria-label="Yazı yükleniyor" className="space-y-6 motion-safe:animate-pulse">
-      <div className={`h-64 md:h-80 rounded-2xl ${bar}`} />
-      <div className={`rounded-2xl border p-card space-y-3 ${panel}`}>
-        <div className={`h-4 rounded w-11/12 ${bar}`} />
-        <div className={`h-4 rounded w-10/12 ${bar}`} />
-        <div className={`h-4 rounded w-7/12 ${bar}`} />
-      </div>
-      <div className={`rounded-2xl border p-card ${panel}`}>
-        <div className={`h-5 rounded w-1/2 mb-6 ${bar}`} />
-        <div className="grid grid-cols-4 gap-3">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className={`h-8 rounded ${bar}`} />
-          ))}
-        </div>
+const ReaderSkeleton = () => (
+  <div role="status" aria-label="Yazı yükleniyor" className="space-y-6 motion-safe:animate-pulse">
+    <div className={`h-64 md:h-80 rounded-2xl ${GLASS}`} />
+    <div className={`rounded-2xl p-card space-y-3 ${GLASS}`}>
+      <div className={`h-4 rounded w-11/12 ${GLASS}`} />
+      <div className={`h-4 rounded w-10/12 ${GLASS}`} />
+      <div className={`h-4 rounded w-7/12 ${GLASS}`} />
+    </div>
+    <div className={`rounded-2xl p-card ${GLASS}`}>
+      <div className={`h-5 rounded w-1/2 mb-6 ${GLASS}`} />
+      <div className="grid grid-cols-4 gap-3">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className={`h-8 rounded ${GLASS}`} />
+        ))}
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const BlogSkeleton = () => (
-  <div className="blogger-card overflow-hidden flex flex-col animate-pulse">
-    <div className="h-40 bg-gray-200" />
+  <div className={`rounded-2xl overflow-hidden flex flex-col motion-safe:animate-pulse ${GLASS}`}>
+    <div className={`h-40 border-0! ${GLASS}`} />
     <div className="p-card-sm flex-1 flex flex-col">
-      <div className="h-6 bg-gray-200 rounded w-3/4 mb-4" />
-      <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+      <div className={`h-6 rounded w-3/4 mb-4 ${GLASS}`} />
+      <div className="mt-auto pt-4 border-t border-white/20 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-gray-100 rounded-full" />
-          <div className="h-3 bg-gray-100 rounded w-20" />
+          <div className={`w-3 h-3 rounded-full ${GLASS}`} />
+          <div className={`h-3 rounded w-20 ${GLASS}`} />
         </div>
       </div>
     </div>
@@ -3154,7 +3154,7 @@ export default function App() {
                         : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'} rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} shadow-sm overflow-hidden w-full`
                       }>
                         {editingBlog?.id === viewingBlog.id ? renderBlocks(blocks) : viewingBlog.content === undefined ? (
-                          <ReaderSkeleton isDark={isDarkModeActive} />
+                          <ReaderSkeleton />
                         ) : renderBlocks(viewingBlog.content)}
                       </div>
                     </div>
