@@ -5,6 +5,7 @@ import { auth, signInWithGoogle, checkIsAdmin, subscribeToBlogs, fetchPublishedB
 import { cleanTableCellHtml } from './lib/cleanTableHtml';
 import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
+import ThemeSwitch from './components/ThemeSwitch';
 import { attachBlockSnap } from './lib/smoothScroll';
 
 // Safelist for Tailwind CSS dynamic classes:
@@ -59,9 +60,7 @@ import {
   PanelTop,
   Check,
   Settings,
-  Sparkles,
-  Sun,
-  Moon
+  Sparkles
 } from 'lucide-react';
 
 interface Note {
@@ -817,6 +816,16 @@ export default function App() {
   const [readingLayout, setReadingLayout] = useState<'modern' | 'classic'>('modern');
   // 'glass': aydınlık temanın üstünde, blokların üst barla aynı cam dolgusunu kullandığı tema
   const [theme, setTheme] = useState<'light' | 'dark' | 'glass'>('light');
+  // Gece anahtarı kapatılınca dönülecek gündüz teması (aydınlık ya da cam)
+  const [lastDayTheme, setLastDayTheme] = useState<'light' | 'glass'>('light');
+  const toggleNight = () => {
+    if (theme === 'dark') {
+      setTheme(lastDayTheme);
+    } else {
+      setLastDayTheme(theme);
+      setTheme('dark');
+    }
+  };
   const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
 
   // Okuma ekranında kaydırma, bloklar arasındaki boşluğun ortasına oturmaya meyilli olsun
@@ -2876,35 +2885,15 @@ export default function App() {
                           {/* Theme Selection */}
                           <div className="flex-1 p-2 space-y-1">
                             <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>TEMA</div>
+                            {/* Gündüz/gece anahtarı: menü açık kalır ki güneşin batışı görünsün */}
+                            <div className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium ${isDarkModeActive ? 'text-gray-300' : 'text-gray-700'}`}>
+                              <span>{theme === 'dark' ? 'Karanlık' : 'Aydınlık'}</span>
+                              <ThemeSwitch isDark={theme === 'dark'} onToggle={toggleNight} />
+                            </div>
                             <button
                               onClick={() => {
-                                setTheme('light');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'light' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Sun size={14} className="opacity-70" />
-                                <span>Aydınlık</span>
-                              </div>
-                              {theme === 'light' && <Check size={14} />}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTheme('dark');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'dark' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Moon size={14} className="opacity-70" />
-                                <span>Karanlık</span>
-                              </div>
-                              {theme === 'dark' && <Check size={14} />}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTheme('glass');
+                                // Cam, gündüz temasının açılıp kapanan bir türü
+                                setTheme(theme === 'glass' ? 'light' : 'glass');
                                 setIsLayoutMenuOpen(false);
                               }}
                               className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'glass' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
