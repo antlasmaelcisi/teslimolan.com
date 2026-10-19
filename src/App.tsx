@@ -59,6 +59,7 @@ import {
   PanelTop,
   Check,
   Settings,
+  Sparkles,
   Sun,
   Moon
 } from 'lucide-react';
@@ -814,7 +815,8 @@ export default function App() {
   const [activeNoteIndex, setActiveNoteIndex] = useState<number | null>(null);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const [readingLayout, setReadingLayout] = useState<'modern' | 'classic'>('modern');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  // 'glass': aydınlık temanın üstünde, blokların üst barla aynı cam dolgusunu kullandığı tema
+  const [theme, setTheme] = useState<'light' | 'dark' | 'glass'>('light');
   const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
 
   // Okuma ekranında kaydırma, bloklar arasındaki boşluğun ortasına oturmaya meyilli olsun
@@ -831,7 +833,9 @@ export default function App() {
     };
   }, [viewingBlog?.id, viewingBlog?.content, readingLayout, editingBlog]);
 
-  const isDarkModeActive = theme === 'dark' && !editingBlog && !window.location.pathname.startsWith('/edit') && !window.location.pathname.startsWith('/admin') && activeTab !== 'create';
+  const isReadingView = !editingBlog && !window.location.pathname.startsWith('/edit') && !window.location.pathname.startsWith('/admin') && activeTab !== 'create';
+  const isDarkModeActive = theme === 'dark' && isReadingView;
+  const isGlassActive = theme === 'glass' && isReadingView;
 
   useEffect(() => {
     if (isDarkModeActive) {
@@ -2178,7 +2182,7 @@ export default function App() {
     return (
       <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200'} shadow-sm scrollbar-thin`}>
         <table 
-          className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-base font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
+          className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent || isGlassActive ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-base font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
           style={{ '--mobile-min-width': colCount > 2 ? `${colCount * 140}px` : '100%' } as React.CSSProperties}
         >
           <colgroup>
@@ -2602,17 +2606,17 @@ export default function App() {
           } else if (block.background === 'dark') {
             bgClass = 'bg-gray-900 text-white theme-text-white';
           } else {
-            bgClass = isDarkModeActive ? 'bg-[#1c1c1e] text-white theme-text-white' : 'bg-white text-gray-900 theme-text-gray';
+            bgClass = isDarkModeActive ? 'bg-[#1c1c1e] text-white theme-text-white' : (isGlassActive ? 'apple-glass text-gray-900 theme-text-gray' : 'bg-white text-gray-900 theme-text-gray');
           }
-          
-          const blockWrapperClass = isModern 
-            ? `${bgClass} rounded-card shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-section overflow-hidden w-full`
+
+          const blockWrapperClass = isModern
+            ? `${bgClass} rounded-card shadow-sm border ${isDarkModeActive ? 'border-white/10' : (isGlassActive ? 'border-white/20' : 'border-gray-100/50')} mb-section overflow-hidden w-full`
             : `${bgClass} w-full ${block.type === 'text' || block.type === 'note' || block.type === 'table' ? (isDarkModeActive ? 'border-b border-white/10' : 'border-b border-gray-100/30') : ''}`;
 
           const blockInnerClass = isModern ? "p-card-sm md:p-card" : "max-w-page mx-auto p-card-sm md:p-card";
 
           if (block.type === 'hero') return (
-            <div key={block.id} className={`relative h-60 md:h-[400px] flex items-center justify-center overflow-hidden ${isModern ? `rounded-card shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-section ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}` : ''}`}>
+            <div key={block.id} className={`relative h-60 md:h-[400px] flex items-center justify-center overflow-hidden ${isModern ? `rounded-card shadow-sm border ${isDarkModeActive ? 'border-white/10' : 'border-gray-100/50'} mb-section ${isDarkModeActive ? 'bg-[#1c1c1e]' : (isGlassActive ? 'apple-glass' : 'bg-white')}` : ''}`}>
               <HeroImage src={block.imageUrl!} viewMode={editingBlog ? 'edit' : 'read'} />
               <div className="absolute inset-0 bg-black/40" />
               <div className={`relative z-10 text-center text-white px-4 ${isModern ? 'w-full' : 'w-full max-w-4xl'}`}>
@@ -2639,7 +2643,7 @@ export default function App() {
           );
 
           if (block.type === 'divider') return (
-            <div key={block.id} className={isModern ? `w-full ${isDarkModeActive ? 'bg-[#1c1c1e] rounded-2xl border border-white/10' : 'bg-white rounded-2xl border border-gray-100/50'} shadow-sm mb-6 overflow-hidden` : `w-full ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}`}>
+            <div key={block.id} className={isModern ? `w-full ${isDarkModeActive ? 'bg-[#1c1c1e] rounded-2xl border border-white/10' : (isGlassActive ? 'apple-glass rounded-2xl' : 'bg-white rounded-2xl border border-gray-100/50')} shadow-sm mb-6 overflow-hidden` : `w-full ${isDarkModeActive ? 'bg-[#1c1c1e]' : (isGlassActive ? 'apple-glass' : 'bg-white')}`}>
               <div className={isModern ? "px-4" : "max-w-4xl mx-auto px-4"}>
                 <div className={`h-px w-full my-4 ${isDarkModeActive ? 'bg-white/10' : 'bg-gray-200'}`} />
               </div>
@@ -2894,6 +2898,19 @@ export default function App() {
                                 <span>Karanlık</span>
                               </div>
                               {theme === 'dark' && <Check size={14} />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setTheme('glass');
+                                setIsLayoutMenuOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'glass' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Sparkles size={14} className="opacity-70" />
+                                <span>Cam</span>
+                              </div>
+                              {theme === 'glass' && <Check size={14} />}
                             </button>
                           </div>
                         </div>
