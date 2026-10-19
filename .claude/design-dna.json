@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "name": "teslimolan.com",
+    "source": "Sitenin kaynak kodundan çıkarıldı (src/index.css, src/App.tsx, src/components/VibrantWallpaper.tsx)",
+    "extracted_at": "2026-10-19",
+    "notes": "Renkler koddaki gerçek değerlerdir, gözle tahmin değildir."
+  },
+  "design_system": {
+    "color": {
+      "brand": { "hex": "#1F7144", "usage": "Logo ve site adı (aydınlık mod). Üzerine gelince #000000." },
+      "primary": { "hex": "#007aff", "hover": "#0062cc", "usage": "Birincil düğme (.blogger-btn-primary), seçim rengi %20 opaklıkta" },
+      "secondary": { "hex": "#1a73e8", "hover": "#1765cc", "usage": "Google tarzı mavi: sites-button, karanlık modda logo üzerine gelme rengi, odak halkası #4285f4" },
+      "accent": { "hex": "#007aff", "usage": "Seçili menü öğesi: bg-blue-50 + text-blue-600 (karanlıkta bg-blue-900/30 + text-blue-400)" },
+      "surface": {
+        "background": "#f5f5f7",
+        "background_dark": "#000000",
+        "card": "#ffffff",
+        "card_dark": "#1c1c1e",
+        "card_dark_raised": "#2c2c2e",
+        "border": "rgba(0,0,0,0.05) / gray-200",
+        "border_dark": "rgba(255,255,255,0.1) / #38383a"
+      },
+      "neutral": {
+        "scale": ["#ffffff", "#f5f5f7", "#f8f9fa", "#e5e7eb", "#9ca3af", "#6b7280", "#1d1d1f", "#000000"],
+        "usage": "Metin #1d1d1f (aydınlık), #f5f5f7 (karanlık). İkincil metin/ikon gray-400/gray-500. Etiket başlıkları gray-400, 10px, kalın, geniş harf aralığı."
+      },
+      "semantic": { "success": "#34c759", "danger": "#ff3b30", "warning": "#ff9500" },
+      "wallpaper_palette": ["#ff2d55", "#5856d6", "#007aff", "#34c759", "#ff9500"],
+      "dark_mode_card_gradient": ["rgba(88,86,214,0.15)", "rgba(175,82,222,0.12)", "rgba(79,70,229,0.10)", "rgba(147,51,234,0.10)", "rgba(37,99,235,0.08)"]
+    },
+    "typography": {
+      "families": { "sans": "Arial, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, sans-serif", "display": "aynı (sans)" },
+      "scale_px": [10, 12, 14, 16, 20, 24, 30, 48],
+      "base": "14px (text-sm), antialiased",
+      "weights": ["500 (medium) düğmeler", "700 (bold) başlıklar ve etiketler"],
+      "headings": "tracking-tight, font-bold",
+      "labels": "10px, bold, tracking-wider, BÜYÜK HARF (örn. YERLEŞİM, TEMA)",
+      "body_prose": "leading-relaxed"
+    },
+    "spacing": {
+      "base_unit": "4px",
+      "scale_px": [4, 8, 12, 16, 24, 32, 40, 48],
+      "tokens": { "control": "32px düğme yüksekliği (h-control)", "card": "40px kart iç boşluğu", "card_sm": "24px", "section": "24px kartlar arası" },
+      "density": "Ferah ama sıkışık değil; araç çubukları kompakt (gap-1 / gap-2)"
+    },
+    "layout": {
+      "max_width": "896px (--container-page)",
+      "structure": "Tek sütun içerik, üstte sabit cam efektli bar, ortalanmış kartlar",
+      "breakpoint": "md (768px): mobilde küçük düğmeler kare ikon olur"
+    },
+    "shape": {
+      "radius": { "control": "8px (rounded-lg / rounded-control)", "menu_item": "12px (rounded-xl)", "card": "16px (rounded-2xl / rounded-card)", "pill": "rounded-full", "app_icon": "22.5% (macOS uygulama ikonu)" },
+      "borders": "1px, çok soluk (gray-200/50, white/10)"
+    },
+    "elevation": {
+      "card": "0 2px 10px rgba(0,0,0,0.04)",
+      "glass_card": "0 8px 32px rgba(0,0,0,0.08), hover 0 12px 40px rgba(0,0,0,0.12)",
+      "menu": "shadow-2xl",
+      "control": "shadow-sm",
+      "dark_mode": "Gölge yok; ayrım kenarlık ve gradyanla"
+    },
+    "iconography": {
+      "library": "lucide-react",
+      "style": "İnce kontür (outline), dolgu yok. Araç çubuğunda 14–20px, gri (gray-500 / karanlıkta gray-400), üzerine gelince koyulaşır.",
+      "app_icons": "Bazı menülerde macOS tarzı renkli kare ikon kutuları (.apple-icon-*): gradyan, iç parlama, katmanlı gölge",
+      "rule": "İkonlar dolu (filled) yapılmaz; kullanıcı denedi ve reddetti (2026-10-19)."
+    },
+    "motion": {
+      "library": "motion (eski adıyla framer-motion; AnimatePresence, motion.div) + Tailwind transition",
+      "durations_ms": [200, 300],
+      "default": "transition-all / transition-colors duration-300",
+      "press": "active:scale-[0.98]",
+      "hover": "hover:brightness-110, renk koyulaşması",
+      "ambient": "Yok. Arka plan sabit; hareketli arka plan denendi ve reddedildi (2026-10-19)."
+    },
+    "components": {
+      "button_primary": ".blogger-btn-primary: #007aff, beyaz metin, rounded-lg, py-2 px-6",
+      "button_secondary": ".blogger-btn-secondary: yarı saydam beyaz, gri kenarlık",
+      "toolbar_icon_button": "Arka plansız, kenarlıksız; sadece ikon (örn. ayarlar dişlisi)",
+      "dropdown_menu": "rounded-2xl, beyaz / #1c1c1e, shadow-2xl, öğeler rounded-xl, seçili öğede sağda Check ikonu",
+      "card": ".apple-card / .blogger-card"
+    }
+  },
+  "design_style": {
+    "aesthetic": { "genre": "Apple / macOS Big Sur esintili kişisel yayın sitesi (Kuran üzerine incelemeler)", "mood": "Sakin, temiz, okunaklı, hafif oyunbaz detaylar (özel imleçler)" },
+    "visual_language": { "ornamentation": "Düşük; dekor yalnızca bulanık renkli arka plan ve cam yüzeyler", "contrast": "Yumuşak; saf siyah yalnızca karanlık mod zemini ve vurgu anlarında" },
+    "composition": { "whitespace": "Bol", "alignment": "Ortalanmış tek sütun", "hierarchy": "Kalın başlık + gri yardımcı metin" },
+    "imagery": "Fotoğraf yok denecek kadar az; içerik metin ve tablo ağırlıklı",
+    "interaction_feel": "Hızlı ve sessiz geri bildirim: 200–300ms renk geçişleri, hafif basma küçülmesi",
+    "brand_voice_in_ui": "Türkçe, kısa etiketler; menü başlıkları BÜYÜK HARF"
+  },
+  "visual_effects": {
+    "overview": { "effect_intensity": "low", "performance_tier": "lightweight" },
+    "background_effects": { "enabled": true, "type": "Sabit, bulanık (blur 80–120px) radyal renk lekeleri + %5 grain dokusu; sadece aydınlık mod", "animated": false },
+    "glassmorphism_neumorphism": { "enabled": true, "notes": "backdrop-blur-xl/2xl, bg-white/40–70, white/20–40 kenarlık" },
+    "cursor_effects": { "enabled": true, "notes": "Özel SVG imleçler: custom-cursor.svg, tıklanabilirlerde mickey-cursor.svg" },
+    "particle_systems": { "enabled": false },
+    "3d_elements": { "enabled": false },
+    "shader_effects": { "enabled": false },
+    "scroll_effects": { "parallax": { "enabled": false }, "scroll_triggered_animations": { "enabled": false }, "scroll_morphing": { "enabled": false } },
+    "text_effects": { "enabled": false },
+    "image_effects": { "enabled": false },
+    "canvas_drawings": { "enabled": false },
+    "svg_animations": { "enabled": false, "notes": "Logo SVG'si üzerine gelince renk değiştirir (transition-colors 300ms)" },
+    "composite_notes": "Efektler bilinçli olarak az ve statik tutuluyor; kodda 'animations removed for speed' notu var."
+  }
+}
