@@ -2867,10 +2867,11 @@ export default function App() {
                     onClick={() => { 
                       navigate(`/edit/${viewingBlog.id}`);
                     }}
-                    className={`w-control h-control flex items-center justify-center ${isDarkModeActive ? 'bg-[#1c1c1e] text-blue-400 border-white/10 hover:bg-white/5' : 'bg-white text-blue-600 border-gray-200 hover:bg-gray-50'} rounded-lg border shadow-sm transition-all duration-300 active:scale-95`}
+                    className={`flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
                     title="Düzenle"
+                    aria-label="Yazıyı düzenle"
                   >
-                    <Edit3 size={14} />
+                    <Edit3 size={20} />
                   </button>
                 )}
                 {isAuthenticated && (
@@ -3144,7 +3145,7 @@ export default function App() {
                           {isAuthenticated && (
                             <button
                               onClick={() => navigate(`/edit/${blog.id}`)}
-                              className="absolute top-3 right-3 w-control h-control flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg shadow-sm text-blue-600 hover:bg-blue-50 transition-all active:scale-90 z-10"
+                              className={`absolute top-3 right-3 w-control h-control flex items-center justify-center backdrop-blur-sm rounded-lg shadow-sm transition-all active:scale-90 z-10 ${isDarkModeActive ? 'bg-[#1c1c1e]/90 text-blue-400 hover:bg-[#2c2c2e]' : 'bg-white/90 text-blue-600 hover:bg-blue-50'}`}
                               title="Düzenle"
                               aria-label={`${blog.title} yazısını düzenle`}
                             >
@@ -3172,7 +3173,7 @@ export default function App() {
                             />
                           </div>
                           <div className="p-card-sm flex-1 flex flex-col">
-                            <h3 className={`text-xl font-bold mb-4 line-clamp-2 font-sans group-hover:text-blue-600 transition-colors ${isDarkModeActive ? 'text-white' : 'text-gray-900'}`}>{blog.title}</h3>
+                            <h3 className={`text-xl font-bold mb-4 line-clamp-2 font-sans transition-colors ${isDarkModeActive ? 'text-white group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'}`}>{blog.title}</h3>
                             <div className={`flex items-center justify-between mt-auto pt-4 border-t ${isDarkModeActive ? 'border-white/10' : 'border-gray-100'}`}>
                               <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
                                 <Clock size={12} className="text-gray-300" />
