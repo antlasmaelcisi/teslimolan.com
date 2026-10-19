@@ -6,6 +6,7 @@ import { cleanTableCellHtml } from './lib/cleanTableHtml';
 import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
 import ThemeSwitch from './components/ThemeSwitch';
+import GlassSwitch from './components/GlassSwitch';
 import { attachBlockSnap } from './lib/smoothScroll';
 
 // Safelist for Tailwind CSS dynamic classes:
@@ -59,8 +60,7 @@ import {
   TableCellsSplit,
   PanelTop,
   Check,
-  Settings,
-  Sparkles
+  Settings
 } from 'lucide-react';
 
 interface Note {
@@ -2854,7 +2854,7 @@ export default function App() {
                   <AnimatePresence>
                     {isLayoutMenuOpen && (
                       <div
-                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'bg-[#1c1c1e] border-[#38383a]' : 'bg-white border-gray-200/50'} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
+                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'bg-[#1c1c1e] border-[#38383a]' : (isGlassActive ? 'apple-glass border-white/20' : 'bg-white border-gray-200/50')} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
                       >
                         <div className="flex divide-x divide-gray-100 dark:divide-gray-800">
                           {/* Layout Selection */}
@@ -2885,25 +2885,14 @@ export default function App() {
                           {/* Theme Selection */}
                           <div className="flex-1 p-2 space-y-1">
                             <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>TEMA</div>
-                            {/* Gündüz/gece anahtarı: menü açık kalır ki güneşin batışı görünsün */}
-                            <div className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium ${isDarkModeActive ? 'text-gray-300' : 'text-gray-700'}`}>
-                              <span>{theme === 'dark' ? 'Karanlık' : 'Aydınlık'}</span>
+                            {/* Anahtarlara basınca menü açık kalır ki animasyonlar görünsün */}
+                            <div className="px-3 py-1.5">
                               <ThemeSwitch isDark={theme === 'dark'} onToggle={toggleNight} />
                             </div>
-                            <button
-                              onClick={() => {
-                                // Cam, gündüz temasının açılıp kapanan bir türü
-                                setTheme(theme === 'glass' ? 'light' : 'glass');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'glass' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Sparkles size={14} className="opacity-70" />
-                                <span>Cam</span>
-                              </div>
-                              {theme === 'glass' && <Check size={14} />}
-                            </button>
+                            <div className="px-3 py-1.5">
+                              {/* Cam, gündüz temasının açılıp kapanan bir türü */}
+                              <GlassSwitch isOn={theme === 'glass'} onToggle={() => setTheme(theme === 'glass' ? 'light' : 'glass')} />
+                            </div>
                           </div>
                         </div>
                       </div>
