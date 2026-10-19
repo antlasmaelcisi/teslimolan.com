@@ -57,7 +57,7 @@ import {
   TableCellsSplit,
   PanelTop,
   Check,
-  Sun
+  Settings
 } from 'lucide-react';
 
 interface Note {
@@ -2786,10 +2786,11 @@ export default function App() {
                 <div className="relative layout-menu-container">
                   <button 
                     onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
-                    className={`flex items-center justify-center gap-2 px-3 h-control ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg border transition-colors shadow-sm`}
+                    aria-label="Yerleşim ve tema ayarları"
+                    title="Yerleşim ve tema ayarları"
+                    className={`flex items-center justify-center px-3 h-control ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg border transition-colors shadow-sm`}
                   >
-                    <Layout size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
-                    <Sun size={14} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
+                    <Settings size={16} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
                   </button>
                   
                   <AnimatePresence>
