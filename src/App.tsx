@@ -3602,7 +3602,8 @@ export default function App() {
       </main>
 
       {/* Footer */}
-        <footer className={`${isDarkModeActive ? 'bg-[#1c1c1e] border-white/10' : 'bg-white border-gray-200'} border-t py-8 mt-auto transition-colors duration-300`}>
+        {/* Alt bilgi üst barla aynı cam dolguyu kullanır (apple-glass); karanlık tema body.dark üzerinden */}
+        <footer className={`apple-glass border-x-0! border-b-0! border-t ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} py-8 mt-auto transition-colors duration-300`}>
           <div className="max-w-page mx-auto px-4 sm:px-0 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <svg className="w-6 h-6 drop-shadow-sm" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
