@@ -1,8 +1,14 @@
 import React from 'react';
 
-const VibrantWallpaper: React.FC = () => {
+// hidden: karanlık temada duvar kâğıdı sökülmez, yalnızca saydamlaşır. Bulanık katmanlar
+// bir kez çizilir; gündüze dönüşte sıfırdan kurulmadıkları için geçiş takılmaz.
+const VibrantWallpaper: React.FC<{ hidden?: boolean }> = ({ hidden = false }) => {
   return (
-    <div className="fixed inset-0 w-full h-full z-[-1] pointer-events-none overflow-hidden bg-[var(--theme-bg)]">
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 w-full h-full z-[-1] pointer-events-none overflow-hidden bg-[var(--theme-bg)] transition-opacity duration-700 motion-reduce:transition-none"
+      style={{ opacity: hidden ? 0 : 1 }}
+    >
       {/* Abstract macOS-style vector shapes - Big Sur / Monterey style */}
       <div 
         className="absolute top-[-20%] left-[-10%] w-[120%] h-[120%] opacity-60"

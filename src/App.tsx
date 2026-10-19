@@ -2172,7 +2172,7 @@ export default function App() {
     const colCount = block.data.rows[0]?.cells.length || 0;
 
     return (
-      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : (isGlassActive ? 'apple-glass border-white/20' : 'border-gray-200')} shadow-sm scrollbar-thin`}>
+      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : (isGlassActive ? 'bg-white/40 border-white/20' : 'border-gray-200')} shadow-sm scrollbar-thin`}>
         <table
           className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent || isGlassActive ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-base font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
           style={{ '--mobile-min-width': colCount > 2 ? `${colCount * 140}px` : '100%' } as React.CSSProperties}
@@ -2725,7 +2725,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
-      {!isDarkModeActive && <VibrantWallpaper />}
+      <VibrantWallpaper hidden={isDarkModeActive} />
 
       {/* Viewport-level Scroll Progress Bar */}
       {viewingBlog && !editingBlog && (
@@ -3172,7 +3172,7 @@ export default function App() {
                   className="flex items-start bg-transparent h-full min-h-screen relative"
                   onClick={() => { setActiveBlockId(null); setSelectedCells([]); }}
                 >
-                  {!isDarkModeActive && <VibrantWallpaper />}
+                  <VibrantWallpaper hidden={isDarkModeActive} />
                   
                   {/* Editor Area */}
                   <div 

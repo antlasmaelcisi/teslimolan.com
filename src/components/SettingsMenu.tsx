@@ -48,13 +48,19 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ theme, onThemeChange, readi
   useEffect(() => setLocalTheme(theme), [theme]);
   useEffect(() => setLocalLayout(readingLayout), [readingLayout]);
 
+  // Sayfayı güncellemeden önce anahtarın yeni hâlinin en az bir kare çizilmesini bekle:
+  // animasyon başladıktan sonra tarayıcı onu ana iş parçacığından bağımsız sürdürür,
+  // böylece sayfanın ağır yeniden boyanması animasyonu dondurmaz.
+  const afterNextPaint = (fn: () => void) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => startTransition(fn)));
+
   const changeTheme = (next: Theme) => {
     setLocalTheme(next);
-    startTransition(() => onThemeChange(next));
+    afterNextPaint(() => onThemeChange(next));
   };
   const changeLayout = (next: ReadingLayout) => {
     setLocalLayout(next);
-    startTransition(() => onReadingLayoutChange(next));
+    afterNextPaint(() => onReadingLayoutChange(next));
   };
   // Geceye geçince Cam kapanır (perde kendiliğinden iner); gündüze dönünce
   // Cam kendiliğinden açılmaz, her zaman düz aydınlık temaya dönülür.
