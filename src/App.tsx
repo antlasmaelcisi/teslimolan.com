@@ -7,6 +7,7 @@ import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
 import ThemeSwitch from './components/ThemeSwitch';
 import GlassSwitch from './components/GlassSwitch';
+import LayoutSwitch from './components/LayoutSwitch';
 import { attachBlockSnap } from './lib/smoothScroll';
 
 // Safelist for Tailwind CSS dynamic classes:
@@ -59,7 +60,6 @@ import {
   TableCellsMerge,
   TableCellsSplit,
   PanelTop,
-  Check,
   Settings
 } from 'lucide-react';
 
@@ -848,13 +848,20 @@ export default function App() {
       setGlassHole(null);
       return;
     }
+    // Menü açılırken ölçeklenerek geldiği için ekran koordinatı yerine yerleşim
+    // ofsetleri toplanır (offsetLeft/Top dönüşümlerden etkilenmez).
     const measure = () => {
-      const bg = menuBgRef.current;
-      const slot = glassSlotRef.current;
-      if (!bg || !slot) return;
-      const b = bg.getBoundingClientRect();
-      const s = slot.getBoundingClientRect();
-      setGlassHole({ x: Math.round(s.left - b.left), y: Math.round(s.top - b.top) });
+      const panel = menuBgRef.current?.parentElement;
+      let el: HTMLElement | null = glassSlotRef.current;
+      if (!panel || !el) return;
+      let x = 0;
+      let y = 0;
+      while (el && el !== panel) {
+        x += el.offsetLeft;
+        y += el.offsetTop;
+        el = el.offsetParent as HTMLElement | null;
+      }
+      setGlassHole({ x, y });
     };
     measure();
     window.addEventListener('resize', measure);
@@ -2875,64 +2882,57 @@ export default function App() {
 
               <nav className="flex items-center gap-1 sm:gap-2 pointer-events-auto">
                 <div className="relative layout-menu-container">
-                  <button 
+                  <button
                     onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
                     aria-label="Yerleşim ve tema ayarları"
+                    aria-haspopup="true"
+                    aria-expanded={isLayoutMenuOpen}
                     title="Yerleşim ve tema ayarları"
-                    className={`flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                    className={`flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? (isLayoutMenuOpen ? 'text-white' : 'text-gray-400 hover:text-white') : (isLayoutMenuOpen ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900')}`}
                   >
-                    <Settings size={20} />
+                    {/* Dişli menü açılırken yerinde döner, kapanırken geri döner */}
+                    <Settings
+                      size={20}
+                      className={`transition-transform duration-500 motion-reduce:transition-none ${isLayoutMenuOpen ? 'rotate-180' : 'rotate-0'}`}
+                      style={{ transitionTimingFunction: 'cubic-bezier(0.65, 0, 0.35, 1)' }}
+                    />
                   </button>
-                  
+
                   <AnimatePresence>
                     {isLayoutMenuOpen && (
-                      <div
-                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'border-[#38383a]' : 'border-gray-200/50'} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        style={{ transformOrigin: 'top right' }}
+                        className={`absolute right-0 mt-3 rounded-[22px] border shadow-[0_16px_48px_rgba(0,0,0,0.16)] z-[100] ${isDarkModeActive ? 'border-white/10' : 'border-black/5'}`}
                       >
+                        {/* Dişliyi gösteren küçük çentik */}
+                        <span
+                          aria-hidden="true"
+                          className={`absolute -top-[6px] right-[10px] w-3 h-3 rotate-45 border-l border-t ${isDarkModeActive ? 'bg-[#1c1c1e] border-white/10' : 'bg-white border-black/5'}`}
+                        />
                         {/* Panel zemini ayrı bir katman: Cam anahtarının arkasında anahtar biçiminde bir pencere açılır */}
                         <div
                           ref={menuBgRef}
                           aria-hidden="true"
-                          className={`absolute inset-0 ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}`}
+                          className={`absolute inset-0 rounded-[21px] ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}`}
                           style={glassHole ? pillHoleMask(glassHole.x, glassHole.y) : undefined}
                         />
-                        <div className="relative flex divide-x divide-gray-100 dark:divide-gray-800">
-                          {/* Layout Selection */}
-                          <div className="flex-1 p-2 space-y-1">
-                            <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>YERLEŞİM</div>
-                            <button
-                              onClick={() => {
-                                setReadingLayout('modern');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'modern' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <span>Modern</span>
-                              {readingLayout === 'modern' && <Check size={14} />}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setReadingLayout('classic');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'classic' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <span>Klasik</span>
-                              {readingLayout === 'classic' && <Check size={14} />}
-                            </button>
-                          </div>
-
-                          {/* Theme Selection */}
-                          <div className="flex-1 p-2 space-y-1">
-                            <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>TEMA</div>
-                            {/* Anahtarlara basınca menü açık kalır ki animasyonlar görünsün */}
-                            <div className="px-3 py-1.5">
+                        {/* Anahtarlara basınca menü açık kalır ki animasyonlar görünsün */}
+                        <div className="relative p-3 space-y-3">
+                          <section>
+                            <div className={`px-1 mb-1.5 text-[10px] font-semibold tracking-[0.12em] ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>YERLEŞİM</div>
+                            <LayoutSwitch value={readingLayout} onChange={setReadingLayout} isDark={isDarkModeActive} />
+                          </section>
+                          <div className={`h-px ${isDarkModeActive ? 'bg-white/10' : 'bg-gray-100'}`} />
+                          <section>
+                            <div className={`px-1 mb-1.5 text-[10px] font-semibold tracking-[0.12em] ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>TEMA</div>
+                            <div className="flex gap-2">
                               <ThemeSwitch isDark={theme === 'dark'} onToggle={toggleNight} />
-                            </div>
-                            <div className="px-3 py-1.5">
-                              {/* Cam, gündüz temasının açılıp kapanan bir türü */}
+                              {/* Cam, gündüz temasının açılıp kapanan bir türü; karanlık temada kilitli */}
                               <div ref={glassSlotRef} className="w-[76px] h-[34px]">
-                                {/* Karanlık temada perde kilitli: açılamaz */}
                                 <GlassSwitch
                                   isOn={theme === 'glass'}
                                   disabled={theme === 'dark'}
@@ -2940,9 +2940,9 @@ export default function App() {
                                 />
                               </div>
                             </div>
-                          </div>
+                          </section>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
