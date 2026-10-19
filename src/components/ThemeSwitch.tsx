@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // Gündüz/gece anahtarı: gündüz mavi gök, bulutlar ve güneş; gece koyu gök, yıldızlar ve ay.
 // Geceye geçerken güneş sağa doğru batar, ardından ay aşağıdan doğar; gündüze dönerken tersi olur.
@@ -23,6 +23,15 @@ const ThemeSwitch: React.FC<ThemeSwitchProps> = ({ isDark, onToggle }) => {
   const sunDelay = isDark ? 0 : RISE_DELAY;
   const moonDelay = isDark ? RISE_DELAY : 0;
   const motion = 'motion-reduce:transition-none';
+
+  // Her geçişte gökyüzü kısa bir süre gün batımı / gün doğumu renklerine bürünür.
+  // Sayaç değişince katman yeniden oluşur ve animasyon baştan oynar; ilk açılışta oynamaz.
+  const [twilight, setTwilight] = useState(0);
+  const prevDark = useRef(isDark);
+  useEffect(() => {
+    if (prevDark.current !== isDark) setTwilight((n) => n + 1);
+    prevDark.current = isDark;
+  }, [isDark]);
 
   return (
     <button
@@ -49,6 +58,17 @@ const ThemeSwitch: React.FC<ThemeSwitchProps> = ({ isDark, onToggle }) => {
             'radial-gradient(circle at 59px 17px, rgba(255,255,255,0.10) 0 19px, rgba(255,255,255,0.06) 19px 27px, rgba(255,255,255,0.03) 27px 35px, transparent 35px), linear-gradient(180deg, #2b3140 0%, #151821 100%)',
         }}
       />
+      {/* Alacakaranlık: geçiş sırasında turuncumsu pembe gök, ufukta parlama */}
+      {twilight > 0 && (
+        <span
+          key={twilight}
+          className="sky-twilight absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 70% at 40% 100%, rgba(255,214,140,0.9) 0%, transparent 70%), linear-gradient(180deg, #ff7e8a 0%, #ff9a6b 55%, #ffc48a 100%)',
+          }}
+        />
+      )}
 
       {/* Yıldızlar: gece belirir */}
       {STARS.map((st, i) => (

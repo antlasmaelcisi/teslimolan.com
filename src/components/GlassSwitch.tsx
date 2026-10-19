@@ -50,7 +50,7 @@ const GlassSwitch: React.FC<GlassSwitchProps> = ({ isOn, onToggle }) => {
   // Bir yandaki perde: kapalı kumaş kenara doğru toplanıp kaybolurken bağlı perde belirir
   const drape = (side: 'left' | 'right') => (
     <span
-      className={`absolute top-[4px] bottom-0 w-1/2 ${side === 'left' ? 'left-0' : 'right-0 -scale-x-100'}`}
+      className={`absolute inset-y-0 w-1/2 ${side === 'left' ? 'left-0' : 'right-0 -scale-x-100'}`}
     >
       <span
         className={`absolute inset-0 origin-left transition-[transform,opacity] duration-500 ${motion}`}
