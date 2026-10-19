@@ -1,38 +1,42 @@
 import React from 'react';
 
+// Apple tarzı yumuşak gradyan paletleri. Her palet beş renkli bir katman olur;
+// katmanlar sırayla birbirine geçer (bkz. index.css: wallpaper-fade).
+const PALETTES: { name: string; colors: [string, string, string, string, string] }[] = [
+  // Big Sur: sitenin ilk paleti
+  { name: 'Big Sur', colors: ['#ff2d55', '#5856d6', '#007aff', '#34c759', '#ff9500'] },
+  // Şafak: şeftali, gül ve leylak
+  { name: 'Şafak', colors: ['#ffb199', '#ff6f91', '#ffd6a5', '#c7b8ff', '#ffc3e1'] },
+  // Okyanus: gök mavisi, turkuaz ve çivit
+  { name: 'Okyanus', colors: ['#64d2ff', '#5e5ce6', '#30b0c7', '#a2f5e8', '#0a84ff'] },
+  // Lavanta: mor, pembe ve buz mavisi
+  { name: 'Lavanta', colors: ['#bf5af2', '#ff9fd6', '#8e9bff', '#ffd1dc', '#b5e3ff'] },
+];
+
+const POSITIONS = ['20% 30%', '80% 20%', '50% 80%', '10% 90%', '90% 90%'];
+
+const gradientFor = (colors: string[]) =>
+  colors.map((c, i) => `radial-gradient(circle at ${POSITIONS[i]}, ${c} 0%, transparent 50%)`).join(', ');
+
 const VibrantWallpaper: React.FC = () => {
   return (
     <div className="fixed inset-0 w-full h-full z-[-1] pointer-events-none overflow-hidden bg-[var(--theme-bg)]">
-      {/* Abstract macOS-style vector shapes - Big Sur / Monterey style */}
-      <div 
-        className="absolute top-[-20%] left-[-10%] w-[120%] h-[120%] opacity-60"
-        style={{ 
-          background: `
-            radial-gradient(circle at 20% 30%, #ff2d55 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, #5856d6 0%, transparent 50%),
-            radial-gradient(circle at 50% 80%, #007aff 0%, transparent 50%),
-            radial-gradient(circle at 10% 90%, #34c759 0%, transparent 50%),
-            radial-gradient(circle at 90% 90%, #ff9500 0%, transparent 50%)
-          `,
-          filter: 'blur(80px)',
-          transform: 'scale(1.2)',
-        }}
-      />
-      
-      {/* Dynamic blobs for "vibrancy" - animations removed for speed */}
-      <div 
-        className="absolute top-[10%] left-[20%] w-[40%] h-[40%] rounded-full blur-[100px] opacity-30"
-        style={{ 
-          background: 'radial-gradient(circle, #ff375f 0%, transparent 70%)',
-        }}
-      />
-      <div 
-        className="absolute bottom-[20%] right-[10%] w-[50%] h-[50%] rounded-full blur-[120px] opacity-25"
-        style={{ 
-          background: 'radial-gradient(circle, #007aff 0%, transparent 70%)',
-        }}
-      />
-      
+      {/* Paletler yavaşça süzülür (wallpaper-drift) ve sırayla birbirine geçer (wallpaper-fade).
+          Yalnızca transform ve opacity hareket eder; bulanıklık bir kez çizilir. */}
+      <div className="wallpaper-drift absolute top-[-20%] left-[-10%] w-[120%] h-[120%]">
+        {PALETTES.map((p, i) => (
+          <div
+            key={p.name}
+            className="wallpaper-layer absolute inset-0"
+            style={{
+              background: gradientFor(p.colors),
+              filter: 'blur(80px)',
+              animationDelay: `calc(${i} * var(--wallpaper-step) - var(--wallpaper-step) * 0.4)`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Subtle grain texture */}
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
     </div>

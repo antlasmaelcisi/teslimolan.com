@@ -460,4 +460,47 @@ table td em {
   font-size: inherit !important;
 }
 
+/* Arka plan paletleri: her palet bir "adım" boyunca görünür, sonra bir sonrakine geçer.
+   4 palet x 24 sn = 96 sn'lik döngü. */
+:root {
+  --wallpaper-step: 24s;
+}
+
+.wallpaper-layer {
+  opacity: 0;
+  will-change: opacity;
+  animation: wallpaper-fade calc(var(--wallpaper-step) * 4) linear infinite both;
+}
+
+@keyframes wallpaper-fade {
+  0% { opacity: 0; }
+  6% { opacity: 0.6; }
+  25% { opacity: 0.6; }
+  31% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.wallpaper-drift {
+  transform: scale(1.2);
+  will-change: transform;
+  animation: wallpaper-drift 60s ease-in-out infinite alternate;
+}
+
+@keyframes wallpaper-drift {
+  0% { transform: scale(1.2) translate(0, 0) rotate(0deg); }
+  50% { transform: scale(1.25) translate(3%, -2%) rotate(6deg); }
+  100% { transform: scale(1.2) translate(-3%, 2%) rotate(-4deg); }
+}
+
+/* "Hareketi azalt" açıksa: hareket yok, ilk palet sabit durur */
+@media (prefers-reduced-motion: reduce) {
+  .wallpaper-layer,
+  .wallpaper-drift {
+    animation: none;
+  }
+  .wallpaper-layer:first-child {
+    opacity: 0.6;
+  }
+}
+
 
