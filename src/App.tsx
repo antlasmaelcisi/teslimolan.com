@@ -5,6 +5,7 @@ import { auth, signInWithGoogle, checkIsAdmin, subscribeToBlogs, fetchPublishedB
 import { cleanTableCellHtml } from './lib/cleanTableHtml';
 import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
+import SettingsMenu from './components/SettingsMenu';
 import { attachBlockSnap } from './lib/smoothScroll';
 
 // Safelist for Tailwind CSS dynamic classes:
@@ -56,12 +57,7 @@ import {
   RotateCcw,
   TableCellsMerge,
   TableCellsSplit,
-  PanelTop,
-  Check,
-  Settings,
-  Sparkles,
-  Sun,
-  Moon
+  PanelTop
 } from 'lucide-react';
 
 interface Note {
@@ -817,7 +813,6 @@ export default function App() {
   const [readingLayout, setReadingLayout] = useState<'modern' | 'classic'>('modern');
   // 'glass': aydınlık temanın üstünde, blokların üst barla aynı cam dolgusunu kullandığı tema
   const [theme, setTheme] = useState<'light' | 'dark' | 'glass'>('light');
-  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
 
   // Okuma ekranında kaydırma, bloklar arasındaki boşluğun ortasına oturmaya meyilli olsun
   useEffect(() => {
@@ -852,15 +847,12 @@ export default function App() {
       if (!target.closest('.admin-menu-container')) {
         setIsAdminMenuOpen(false);
       }
-      if (!target.closest('.layout-menu-container')) {
-        setIsLayoutMenuOpen(false);
-      }
     };
-    if (isAdminMenuOpen || isLayoutMenuOpen) {
+    if (isAdminMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isAdminMenuOpen, isLayoutMenuOpen]);
+  }, [isAdminMenuOpen]);
 
 
 
@@ -2180,7 +2172,7 @@ export default function App() {
     const colCount = block.data.rows[0]?.cells.length || 0;
 
     return (
-      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : (isGlassActive ? 'apple-glass border-white/20' : 'border-gray-200')} shadow-sm scrollbar-thin`}>
+      <div className={`w-full overflow-x-auto rounded-2xl border ${isDarkModeActive ? 'border-white/10' : (isGlassActive ? 'bg-white/40 border-white/20' : 'border-gray-200')} shadow-sm scrollbar-thin`}>
         <table
           className={`min-w-full table-fixed border-separate border-spacing-0 ${block.tableTransparent || isGlassActive ? 'bg-transparent' : (isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white')} text-base font-sans transition-colors duration-300 max-sm:!min-w-[var(--mobile-min-width)]`}
           style={{ '--mobile-min-width': colCount > 2 ? `${colCount * 140}px` : '100%' } as React.CSSProperties}
@@ -2733,7 +2725,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden">
-      {!isDarkModeActive && <VibrantWallpaper />}
+      <VibrantWallpaper hidden={isDarkModeActive} />
 
       {/* Viewport-level Scroll Progress Bar */}
       {viewingBlog && !editingBlog && (
@@ -2832,95 +2824,13 @@ export default function App() {
               </div>
 
               <nav className="flex items-center gap-1 sm:gap-2 pointer-events-auto">
-                <div className="relative layout-menu-container">
-                  <button 
-                    onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
-                    aria-label="Yerleşim ve tema ayarları"
-                    title="Yerleşim ve tema ayarları"
-                    className={`flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
-                  >
-                    <Settings size={20} />
-                  </button>
-                  
-                  <AnimatePresence>
-                    {isLayoutMenuOpen && (
-                      <div
-                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'bg-[#1c1c1e] border-[#38383a]' : 'bg-white border-gray-200/50'} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
-                      >
-                        <div className="flex divide-x divide-gray-100 dark:divide-gray-800">
-                          {/* Layout Selection */}
-                          <div className="flex-1 p-2 space-y-1">
-                            <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>YERLEŞİM</div>
-                            <button
-                              onClick={() => {
-                                setReadingLayout('modern');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'modern' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <span>Modern</span>
-                              {readingLayout === 'modern' && <Check size={14} />}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setReadingLayout('classic');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${readingLayout === 'classic' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <span>Klasik</span>
-                              {readingLayout === 'classic' && <Check size={14} />}
-                            </button>
-                          </div>
-
-                          {/* Theme Selection */}
-                          <div className="flex-1 p-2 space-y-1">
-                            <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>TEMA</div>
-                            <button
-                              onClick={() => {
-                                setTheme('light');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'light' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Sun size={14} className="opacity-70" />
-                                <span>Aydınlık</span>
-                              </div>
-                              {theme === 'light' && <Check size={14} />}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTheme('dark');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'dark' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Moon size={14} className="opacity-70" />
-                                <span>Karanlık</span>
-                              </div>
-                              {theme === 'dark' && <Check size={14} />}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setTheme('glass');
-                                setIsLayoutMenuOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'glass' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Sparkles size={14} className="opacity-70" />
-                                <span>Cam</span>
-                              </div>
-                              {theme === 'glass' && <Check size={14} />}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <SettingsMenu
+                  theme={theme}
+                  onThemeChange={setTheme}
+                  readingLayout={readingLayout}
+                  onReadingLayoutChange={setReadingLayout}
+                  darkAllowed={isReadingView}
+                />
 
                 {viewingBlog && isAuthenticated && (
                   <button 
@@ -3262,7 +3172,7 @@ export default function App() {
                   className="flex items-start bg-transparent h-full min-h-screen relative"
                   onClick={() => { setActiveBlockId(null); setSelectedCells([]); }}
                 >
-                  {!isDarkModeActive && <VibrantWallpaper />}
+                  <VibrantWallpaper hidden={isDarkModeActive} />
                   
                   {/* Editor Area */}
                   <div 
@@ -3692,7 +3602,8 @@ export default function App() {
       </main>
 
       {/* Footer */}
-        <footer className={`${isDarkModeActive ? 'bg-[#1c1c1e] border-white/10' : 'bg-white border-gray-200'} border-t py-8 mt-auto transition-colors duration-300`}>
+        {/* Alt bilgi üst barla aynı cam dolguyu kullanır (apple-glass); karanlık tema body.dark üzerinden */}
+        <footer className={`apple-glass border-x-0! border-b-0! border-t ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} py-8 mt-auto transition-colors duration-300`}>
           <div className="max-w-page mx-auto px-4 sm:px-0 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <svg className="w-6 h-6 drop-shadow-sm" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -268,6 +268,25 @@ table.table-fixed {
   cursor: default;
 }
 
+/* Gündüz/gece anahtarı: geçiş sırasında gök kısa bir süre gün batımı renklerine bürünür */
+.sky-twilight {
+  opacity: 0;
+  animation: sky-twilight 1100ms ease-in-out both;
+}
+
+@keyframes sky-twilight {
+  0% { opacity: 0; }
+  35% { opacity: 1; }
+  60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-twilight {
+    animation: none;
+  }
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -458,6 +477,55 @@ table td code,
 table td strong,
 table td em {
   font-size: inherit !important;
+}
+
+/* Arka plan paletleri: her palet bir "adım" boyunca görünür, sonra bir sonrakine geçer.
+   4 palet x 24 sn = 96 sn'lik döngü. */
+:root {
+  --wallpaper-step: 24s;
+}
+
+.wallpaper-layer {
+  opacity: 0;
+  will-change: opacity;
+  animation: wallpaper-fade calc(var(--wallpaper-step) * 4) linear infinite both;
+}
+
+@keyframes wallpaper-fade {
+  0% { opacity: 0; }
+  6% { opacity: 0.6; }
+  25% { opacity: 0.6; }
+  31% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.wallpaper-drift {
+  transform: scale(1.2);
+  will-change: transform;
+  animation: wallpaper-drift 60s ease-in-out infinite alternate;
+}
+
+@keyframes wallpaper-drift {
+  0% { transform: scale(1.2) translate(0, 0) rotate(0deg); }
+  50% { transform: scale(1.25) translate(3%, -2%) rotate(6deg); }
+  100% { transform: scale(1.2) translate(-3%, 2%) rotate(-4deg); }
+}
+
+/* Karanlık temada duvar kâğıdı görünmez; görünmezken animasyon boşuna çalışmasın */
+.wallpaper-paused .wallpaper-layer,
+.wallpaper-paused .wallpaper-drift {
+  animation-play-state: paused;
+}
+
+/* "Hareketi azalt" açıksa: hareket yok, ilk palet sabit durur */
+@media (prefers-reduced-motion: reduce) {
+  .wallpaper-layer,
+  .wallpaper-drift {
+    animation: none;
+  }
+  .wallpaper-layer:first-child {
+    opacity: 0.6;
+  }
 }
 
 
