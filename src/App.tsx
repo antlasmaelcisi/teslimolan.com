@@ -57,7 +57,9 @@ import {
   TableCellsSplit,
   PanelTop,
   Check,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface Note {
@@ -2788,9 +2790,9 @@ export default function App() {
                     onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
                     aria-label="Yerleşim ve tema ayarları"
                     title="Yerleşim ve tema ayarları"
-                    className={`flex items-center justify-center px-3 h-control ${isDarkModeActive ? 'bg-[#1c1c1e] text-white border-white/10 hover:bg-white/5' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} rounded-lg border transition-colors shadow-sm`}
+                    className={`flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
                   >
-                    <Settings size={16} className={isDarkModeActive ? "text-gray-400" : "text-gray-500"} />
+                    <Settings size={20} />
                   </button>
                   
                   <AnimatePresence>
@@ -2835,7 +2837,7 @@ export default function App() {
                               className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'light' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
                             >
                               <div className="flex items-center gap-2">
-                                <Palette size={14} className="opacity-70" />
+                                <Sun size={14} className="opacity-70" />
                                 <span>Aydınlık</span>
                               </div>
                               {theme === 'light' && <Check size={14} />}
@@ -2848,7 +2850,7 @@ export default function App() {
                               className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-xl transition-colors text-left ${theme === 'dark' ? (isDarkModeActive ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600') : (isDarkModeActive ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100')}`}
                             >
                               <div className="flex items-center gap-2">
-                                <PanelBottomClose size={14} className="opacity-70" />
+                                <Moon size={14} className="opacity-70" />
                                 <span>Karanlık</span>
                               </div>
                               {theme === 'dark' && <Check size={14} />}
