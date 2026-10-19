@@ -2790,12 +2790,9 @@ export default function App() {
                     onClick={() => setIsLayoutMenuOpen(!isLayoutMenuOpen)}
                     aria-label="Yerleşim ve tema ayarları"
                     title="Yerleşim ve tema ayarları"
-                    className={`group flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? 'text-gray-400 hover:text-[#1a73e8]' : 'text-gray-500 hover:text-black'}`}
+                    className={`flex items-center justify-center px-1 h-control bg-transparent border-0 transition-colors ${isDarkModeActive ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
                   >
-                    <Settings
-                      size={20}
-                      className={`transition-colors [&_path]:transition-colors [&_circle]:transition-colors group-hover:[&_path]:fill-current ${isDarkModeActive ? 'group-hover:[&_circle]:fill-[#1c1c1e]' : 'group-hover:[&_circle]:fill-white'}`}
-                    />
+                    <Settings size={20} />
                   </button>
                   
                   <AnimatePresence>
