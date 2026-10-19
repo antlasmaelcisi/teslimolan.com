@@ -5,6 +5,7 @@ import { auth, signInWithGoogle, checkIsAdmin, subscribeToBlogs, fetchPublishedB
 import { cleanTableCellHtml } from './lib/cleanTableHtml';
 import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
+import { attachBlockSnap } from './lib/smoothScroll';
 
 // Safelist for Tailwind CSS dynamic classes:
 // text-left text-center text-right text-justify
@@ -776,6 +777,7 @@ export default function App() {
   const [lastSelectedColor, setLastSelectedColor] = useState('');
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const readingBlocksRef = useRef<HTMLDivElement>(null);
   const [isHeaderFullyVisible, setIsHeaderFullyVisible] = useState(true);
   const isHeaderFullyVisibleRef = useRef(true);
   
@@ -790,6 +792,20 @@ export default function App() {
   const [readingLayout, setReadingLayout] = useState<'modern' | 'classic'>('modern');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
+
+  // Okuma ekranında kaydırma, bloklar arasındaki boşluğun ortasına oturmaya meyilli olsun
+  useEffect(() => {
+    const el = readingBlocksRef.current;
+    if (!el || !viewingBlog || viewingBlog.content === undefined || editingBlog) return;
+    const frame = requestAnimationFrame(() => {
+      detach = attachBlockSnap(el);
+    });
+    let detach = () => {};
+    return () => {
+      cancelAnimationFrame(frame);
+      detach();
+    };
+  }, [viewingBlog?.id, viewingBlog?.content, readingLayout, editingBlog]);
 
   const isDarkModeActive = theme === 'dark' && !editingBlog && !window.location.pathname.startsWith('/edit') && !window.location.pathname.startsWith('/admin') && activeTab !== 'create';
 
@@ -3109,7 +3125,7 @@ export default function App() {
                     className={`relative z-10 max-w-page mx-auto w-full`}
                   >
                     <div className="pb-20 bg-transparent">
-                      <div className={readingLayout === 'modern' 
+                      <div ref={readingBlocksRef} className={readingLayout === 'modern' 
                         ? `space-y-6 ${isDarkModeActive ? 'text-white' : 'text-gray-900'}` 
                         : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'} rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} shadow-sm overflow-hidden w-full`
                       }>
