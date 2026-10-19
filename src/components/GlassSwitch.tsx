@@ -3,6 +3,7 @@ import React from 'react';
 // Cam teması anahtarı: üstte uçları toplu bir korniş, ondan sarkan iki perde.
 // Kapalıyken perdeler anahtarın içini örter; açılınca perdeler iki yana toplanıp
 // belden bağlanır (klasik perde ikonu gibi) ve anahtar saydam bir pencereye döner.
+// Durumu perdeler gösterdiği için ayrı bir topuz yok.
 interface GlassSwitchProps {
   isOn: boolean;
   onToggle: () => void;
@@ -28,7 +29,7 @@ const ClosedDrape = () => (
 
 // Açık perde: kenara toplanmış, belden bağlı, eteği açılan kumaş (sol perde; sağ perde aynası)
 const OpenDrape = () => (
-  <svg viewBox="0 0 16 30" preserveAspectRatio="none" className="absolute left-0 top-0 h-full w-[16px]">
+  <svg viewBox="0 0 16 30" preserveAspectRatio="none" className="absolute left-0 top-0 h-full w-[19px]">
     <path d="M0 0H15C13 8 7 14 4 18C7 22 10 26 11 30H0Z" fill={FABRIC} />
     <path
       d="M5 0C4.5 7 3 13 2 18M10 0C8.5 8 5 14 3.5 18M3 19.5C4.5 23 6 27 6.5 30"
@@ -83,19 +84,6 @@ const GlassSwitch: React.FC<GlassSwitchProps> = ({ isOn, onToggle }) => {
       <span className="absolute left-[13px] right-[13px] top-[3px] h-[1.5px] rounded-full" style={{ background: ROD }} />
       <span className="absolute left-[10px] top-[2px] w-[4px] h-[4px] rounded-full" style={{ background: ROD }} />
       <span className="absolute right-[10px] top-[2px] w-[4px] h-[4px] rounded-full" style={{ background: ROD }} />
-
-      {/* Topuz: cam küre */}
-      <span
-        className={`absolute left-[4px] top-[4px] w-[26px] h-[26px] rounded-full transition-transform duration-500 ${motion}`}
-        style={t({
-          background:
-            'radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95) 0 18%, rgba(255,255,255,0.35) 40%, rgba(255,255,255,0.15) 100%)',
-          border: '1px solid rgba(255,255,255,0.85)',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.22), inset 0 -2px 4px rgba(120,110,170,0.25)',
-          backdropFilter: 'blur(4px)',
-          transform: isOn ? 'translateX(42px)' : 'translateX(0)',
-        })}
-      />
     </button>
   );
 };
