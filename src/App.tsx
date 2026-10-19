@@ -498,6 +498,22 @@ const ReaderSkeleton = () => (
   </div>
 );
 
+// Cam anahtarı (76x34, tam yuvarlak uçlu) biçiminde bir delik: zemin katmanının
+// tamamından bu şekil çıkarılır, böylece yalnızca anahtarın arkası saydam kalır.
+const PILL_SHAPE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='76' height='34'%3E%3Crect width='76' height='34' rx='17'/%3E%3C/svg%3E")`;
+const pillHoleMask = (x: number, y: number): React.CSSProperties => ({
+  WebkitMaskImage: `linear-gradient(#000, #000), ${PILL_SHAPE}`,
+  maskImage: `linear-gradient(#000, #000), ${PILL_SHAPE}`,
+  WebkitMaskSize: '100% 100%, 76px 34px',
+  maskSize: '100% 100%, 76px 34px',
+  WebkitMaskPosition: `0 0, ${x}px ${y}px`,
+  maskPosition: `0 0, ${x}px ${y}px`,
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskComposite: 'xor',
+  maskComposite: 'exclude',
+});
+
 const BlogSkeleton = () => (
   <div className={`rounded-2xl overflow-hidden flex flex-col motion-safe:animate-pulse ${GLASS}`}>
     <div className={`h-40 border-0! ${GLASS}`} />
@@ -826,7 +842,31 @@ export default function App() {
       setTheme('dark');
     }
   };
+
+  // Tema menüsü açıkken Cam anahtarının panel zeminindeki konumunu ölç;
+  // zeminde o noktaya anahtar biçiminde bir pencere açılır.
+  const menuBgRef = useRef<HTMLDivElement>(null);
+  const glassSlotRef = useRef<HTMLDivElement>(null);
+  const [glassHole, setGlassHole] = useState<{ x: number; y: number } | null>(null);
   const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isLayoutMenuOpen) {
+      setGlassHole(null);
+      return;
+    }
+    const measure = () => {
+      const bg = menuBgRef.current;
+      const slot = glassSlotRef.current;
+      if (!bg || !slot) return;
+      const b = bg.getBoundingClientRect();
+      const s = slot.getBoundingClientRect();
+      setGlassHole({ x: Math.round(s.left - b.left), y: Math.round(s.top - b.top) });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isLayoutMenuOpen]);
 
   // Okuma ekranında kaydırma, bloklar arasındaki boşluğun ortasına oturmaya meyilli olsun
   useEffect(() => {
@@ -2854,9 +2894,16 @@ export default function App() {
                   <AnimatePresence>
                     {isLayoutMenuOpen && (
                       <div
-                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'bg-[#1c1c1e] border-[#38383a]' : (isGlassActive ? 'apple-glass border-white/20' : 'bg-white border-gray-200/50')} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
+                        className={`absolute right-0 mt-2 w-80 ${isDarkModeActive ? 'border-[#38383a]' : 'border-gray-200/50'} rounded-2xl shadow-2xl border overflow-hidden z-[100]`}
                       >
-                        <div className="flex divide-x divide-gray-100 dark:divide-gray-800">
+                        {/* Panel zemini ayrı bir katman: Cam anahtarının arkasında anahtar biçiminde bir pencere açılır */}
+                        <div
+                          ref={menuBgRef}
+                          aria-hidden="true"
+                          className={`absolute inset-0 ${isDarkModeActive ? 'bg-[#1c1c1e]' : 'bg-white'}`}
+                          style={glassHole ? pillHoleMask(glassHole.x, glassHole.y) : undefined}
+                        />
+                        <div className="relative flex divide-x divide-gray-100 dark:divide-gray-800">
                           {/* Layout Selection */}
                           <div className="flex-1 p-2 space-y-1">
                             <div className={`px-3 py-1 text-[10px] font-bold tracking-wider ${isDarkModeActive ? 'text-gray-500' : 'text-gray-400'}`}>YERLEŞİM</div>
@@ -2891,7 +2938,9 @@ export default function App() {
                             </div>
                             <div className="px-3 py-1.5">
                               {/* Cam, gündüz temasının açılıp kapanan bir türü */}
-                              <GlassSwitch isOn={theme === 'glass'} onToggle={() => setTheme(theme === 'glass' ? 'light' : 'glass')} />
+                              <div ref={glassSlotRef} className="w-[76px] h-[34px]">
+                                <GlassSwitch isOn={theme === 'glass'} onToggle={() => setTheme(theme === 'glass' ? 'light' : 'glass')} />
+                              </div>
                             </div>
                           </div>
                         </div>
