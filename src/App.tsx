@@ -474,6 +474,30 @@ const Login = ({ onLoginSuccess, isDarkMode }: { onLoginSuccess: () => void, isD
   );
 };
 
+// Yazı yüklenirken blokların yerini tutan iskelet: banner, metin ve tablo blokları
+const ReaderSkeleton = ({ isDark }: { isDark: boolean }) => {
+  const bar = isDark ? 'bg-white/10' : 'bg-gray-200';
+  const panel = isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200';
+  return (
+    <div role="status" aria-label="Yazı yükleniyor" className="space-y-6 motion-safe:animate-pulse">
+      <div className={`h-64 md:h-80 rounded-2xl ${bar}`} />
+      <div className={`rounded-2xl border p-card space-y-3 ${panel}`}>
+        <div className={`h-4 rounded w-11/12 ${bar}`} />
+        <div className={`h-4 rounded w-10/12 ${bar}`} />
+        <div className={`h-4 rounded w-7/12 ${bar}`} />
+      </div>
+      <div className={`rounded-2xl border p-card ${panel}`}>
+        <div className={`h-5 rounded w-1/2 mb-6 ${bar}`} />
+        <div className="grid grid-cols-4 gap-3">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className={`h-8 rounded ${bar}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const BlogSkeleton = () => (
   <div className="blogger-card overflow-hidden flex flex-col animate-pulse">
     <div className="h-40 bg-gray-200" />
@@ -3130,9 +3154,7 @@ export default function App() {
                         : `space-y-0 ${isDarkModeActive ? 'text-white' : 'text-gray-900'} rounded-2xl border ${isDarkModeActive ? 'border-white/10' : 'border-gray-200/50'} shadow-sm overflow-hidden w-full`
                       }>
                         {editingBlog?.id === viewingBlog.id ? renderBlocks(blocks) : viewingBlog.content === undefined ? (
-                          <div className="min-h-[40vh] flex items-center justify-center" role="status" aria-label="Yazı yükleniyor">
-                            <div className="w-10 h-10 border-4 border-[#1F7144]/20 border-t-[#1F7144] rounded-full animate-spin" />
-                          </div>
+                          <ReaderSkeleton isDark={isDarkModeActive} />
                         ) : renderBlocks(viewingBlog.content)}
                       </div>
                     </div>
