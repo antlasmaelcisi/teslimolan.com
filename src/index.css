@@ -461,3 +461,31 @@ table td em {
 }
 
 
+
+/* Arka plan renk lekeleri: yavaş, minimal hareket */
+.wp-blob {
+  filter: blur(80px);
+  will-change: transform, opacity;
+}
+@keyframes wp-drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.08); }
+  100% { transform: translate3d(-4%, 7%, 0) scale(0.96); }
+}
+@keyframes wp-drift-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%  { transform: translate3d(-7%, 5%, 0) scale(0.95); }
+  100% { transform: translate3d(5%, -4%, 0) scale(1.1); }
+}
+@keyframes wp-drift-c {
+  0%   { transform: translate3d(0, 0, 0) scale(0.95); }
+  50%  { transform: translate3d(5%, -6%, 0) scale(1.06); }
+  100% { transform: translate3d(-6%, -3%, 0) scale(1); }
+}
+@keyframes wp-fade {
+  0%, 20%  { opacity: 0; }
+  60%, 100% { opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wp-blob { animation: none !important; }
+}
