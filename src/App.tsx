@@ -1669,10 +1669,10 @@ export default function App() {
               />
               {isTextColorPaletteOpen && (
                 <div 
-                  className="absolute top-full right-0 md:left-0 md:right-auto mt-1 grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl z-[10002] w-max" 
+                  className="absolute top-full right-0 md:left-0 md:right-auto mt-1 grid grid-cols-2 sm:grid-cols-7 gap-1.5 p-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl z-[10002] w-max"
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  {['', '#A9A9A9', '#4285f4', '#155dfc', '#ea4335', '#34a853', '#fbbc04', '#ff00ff', '#ff6d01', '#9900ff', '#46bdc6'].map((color, idx) => (
+                  {['', '#A9A9A9', '#4285f4', '#155dfc', '#ea4335', '#34a853', '#fbbc04', '#ff00ff', '#ff6d01', '#9900ff', '#46bdc6', '#674ea7', '#8e7cc3', '#bf9000'].map((color, idx) => (
                     <button 
                       key={idx}
                       onMouseDown={(e) => { 
