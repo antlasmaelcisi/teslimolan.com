@@ -1672,7 +1672,7 @@ export default function App() {
                   className="absolute top-full right-0 md:left-0 md:right-auto mt-1 grid grid-cols-2 sm:grid-cols-7 gap-1.5 p-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl z-[10002] w-max"
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  {['', '#A9A9A9', '#4285f4', '#155dfc', '#ea4335', '#34a853', '#fbbc04', '#ff00ff', '#ff6d01', '#9900ff', '#46bdc6', '#674ea7', '#8e7cc3', '#bf9000'].map((color, idx) => (
+                  {['', '#A9A9A9', '#4285f4', '#155dfc', '#ea4335', '#990000', '#34a853', '#fbbc04', '#ff00ff', '#a64d79', '#ff6d01', '#9900ff', '#46bdc6', '#674ea7', '#8e7cc3', '#bf9000'].map((color, idx) => (
                     <button 
                       key={idx}
                       onMouseDown={(e) => { 
@@ -1687,7 +1687,7 @@ export default function App() {
                       }}
                       className="w-5 h-5 rounded-full border border-gray-100 hover:scale-110 active:scale-90 transition-all flex items-center justify-center overflow-hidden shadow-sm"
                       style={{ backgroundColor: color === '' ? '#000000' : color }}
-                      title={color === '' ? 'Varsayılan (#000000)' : (color === '#A9A9A9' ? 'Koyu Gri (#A9A9A9)' : color)}
+                      title={color === '' ? 'Varsayılan (#000000)' : (color === '#A9A9A9' ? 'Koyu Gri (#A9A9A9)' : color === '#990000' ? 'Koyu Kırmızı 2 (#990000)' : color === '#a64d79' ? 'Koyu Macenta 1 (#a64d79)' : color)}
                     >
                       {color === '' && <span className="text-[8px] font-bold text-white">V</span>}
                       {color === '#A9A9A9' && <span className="text-[8px] font-bold text-white">G</span>}
