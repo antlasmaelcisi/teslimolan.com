@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-// Header logo: on hover the ÷ turns (≈225°) into a ×, the seven boxes round "19" run a blue → red → yellow → green wave
-// clockwise, the body takes each colour as it leaves the last box, and ends black (light theme) once the green has gone.
+// Header logo: on hover the ÷ turns (≈225°) into a ×, the body goes straight to black (light theme), and the seven
+// boxes round "19" run a blue → red → yellow → green wave clockwise, each box going back to black behind the green.
 
 type Vec = [number, number];
 type Piece = { c: Vec; a: number; L: Vec[]; f: number; s: number };
@@ -81,11 +81,9 @@ const hex = (h: string) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const rgb = (c: number[]) => 'rgb(' + c.map(Math.round).join(',') + ')';
 const mixRGB = (a: number[], b: number[], x: number) => a.map((v, i) => v + (b[i] - v) * x);
 const WAVE_COLORS = ['#4285f4', '#ea4335', '#fbbc04', '#34a853'].map(hex); // blue, red, yellow, green
-const WAVE_END = 0.8;                     // the wave runs over the first 80 % of the move
 const BOXES = 7;                          // clockwise from the top left
-const STEPS = (BOXES - 1) + WAVE_COLORS.length;                      // last box starts at step 6 and turns green at step 10
-const atStep = (n: number) => n / STEPS * WAVE_END;
-const GREEN_GONE = 0.935, FLIP = 0.025;   // green leaves the boxes around here; each colour flip lasts ±FLIP
+const STEPS = (BOXES - 1) + WAVE_COLORS.length + 1;                  // each box: black → blue → red → yellow → green → black
+const BODY_FLIP = 0.08;                   // the body goes from its colour straight to the final colour right at the start
 
 const DURATION = 750;
 
@@ -109,19 +107,15 @@ export default function AnimatedLogo({ isDark, active, className }: { isDark: bo
     q('[data-g="cross"]').setAttribute('opacity', e >= 1 ? '1' : '0');
     q('[data-g="morph"]').setAttribute('opacity', e <= 0 || e >= 1 ? '0' : '1');
 
-    const BODY = hex(body), FINAL = hex(final), wave = [BODY, ...WAVE_COLORS];
-    const step = Math.min(t / WAVE_END, 1) * STEPS, boxEnd = smooth(GREEN_GONE - FLIP, GREEN_GONE + FLIP, t);
+    const FINAL = hex(final);
+    const col = mixRGB(hex(body), FINAL, smooth(0, BODY_FLIP, t));     // body: straight from its colour to the final one
+    svg.querySelectorAll('[data-body]').forEach(n => n.setAttribute('fill', rgb(col)));
+    // boxes: follow the body until the wave reaches them, run blue → red → yellow → green, then go back to the final colour
+    const wave = [col, ...WAVE_COLORS, FINAL], step = t * STEPS;
     for (let i = 0; i < BOXES; i++) {
       const ph = Math.min(Math.max(step - i, 0), wave.length - 1), j = Math.min(Math.floor(ph), wave.length - 2);
-      const c = mixRGB(wave[j], wave[j + 1], smooth(0, 1, ph - j));
-      q(`[data-box="${i}"]`).setAttribute('fill', rgb(mixRGB(c, FINAL, boxEnd)));
+      q(`[data-box="${i}"]`).setAttribute('fill', rgb(mixRGB(wave[j], wave[j + 1], smooth(0, 1, ph - j))));
     }
-    // the body takes each colour the moment it leaves the last box, and the final colour when the green leaves
-    let col = BODY;
-    for (const [at, to] of [[atStep(8), WAVE_COLORS[0]], [atStep(9), WAVE_COLORS[1]], [atStep(10), WAVE_COLORS[2]], [GREEN_GONE, FINAL]] as [number, number[]][])
-      col = mixRGB(col, to, smooth(at - FLIP, at + FLIP, t));
-    const fill = rgb(col);
-    svg.querySelectorAll('[data-body]').forEach(n => n.setAttribute('fill', fill));
   };
 
   useLayoutEffect(() => { draw.current(state.current.t); }, [isDark]);
