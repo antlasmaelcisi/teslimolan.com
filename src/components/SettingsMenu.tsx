@@ -134,24 +134,14 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ theme, onThemeChange, readi
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{ transformOrigin: 'top right' }}
-            className={`absolute right-0 mt-4 rounded-[22px] rounded-tr-none border shadow-[0_16px_48px_rgba(0,0,0,0.16)] z-[100] ${isDark ? 'border-white/10' : 'border-black/5'}`}
+            className={`absolute right-0 mt-2 rounded-2xl border shadow-xl z-[100] ${isDark ? 'border-[#38383a]' : 'border-gray-200/50'}`}
           >
-            {/* Dişliyi gösteren dik üçgen kulakçık: dik kenarı panelin sağ kenarının devamı,
-                tabanı panelin üst kenarına kaynar (bu yüzden panelin sağ üst köşesi yuvarlak değil) */}
-            <svg aria-hidden="true" width="15" height="12" viewBox="0 0 15 12" className="absolute -top-[12px] -right-px">
-              <path d="M15 0V12H0Z" fill={isDark ? '#000000' : '#ffffff'} />
-              <path
-                d="M0.5 11.5L14.5 0.5V12"
-                fill="none"
-                stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
-                strokeWidth="1"
-              />
-            </svg>
-            {/* Panel zemini ayrı bir katman: Cam anahtarının arkasında anahtar biçiminde bir pencere açılır */}
+            {/* Konum, köşe, kenarlık ve gölge Admin menüsüyle aynı.
+                Panel zemini ayrı bir katman: Cam anahtarının arkasında anahtar biçiminde bir pencere açılır */}
             <div
               ref={menuBgRef}
               aria-hidden="true"
-              className={`absolute inset-0 rounded-[21px] rounded-tr-none ${isDark ? 'bg-[#1c1c1e]' : 'bg-white'}`}
+              className={`absolute inset-0 rounded-[15px] ${isDark ? 'bg-[#1c1c1e]' : 'bg-white'}`}
               style={glassHole ? pillHoleMask(glassHole.x, glassHole.y) : undefined}
             />
             {/* Anahtarlara basınca menü açık kalır ki animasyonlar görünsün */}
