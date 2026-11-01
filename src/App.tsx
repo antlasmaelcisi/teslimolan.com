@@ -6,6 +6,7 @@ import { cleanTableCellHtml } from './lib/cleanTableHtml';
 import { ContentEditable } from './components/ContentEditable';
 import VibrantWallpaper from './components/VibrantWallpaper';
 import SettingsMenu from './components/SettingsMenu';
+import AnimatedLogo from './components/AnimatedLogo';
 import { attachBlockSnap } from './lib/smoothScroll';
 
 // Safelist for Tailwind CSS dynamic classes:
@@ -798,6 +799,7 @@ export default function App() {
   const [lastSelectedColor, setLastSelectedColor] = useState('');
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
   const readingBlocksRef = useRef<HTMLDivElement>(null);
   const [isHeaderFullyVisible, setIsHeaderFullyVisible] = useState(true);
   const isHeaderFullyVisibleRef = useRef(true);
@@ -2794,30 +2796,13 @@ export default function App() {
             >
               <div
                 className="flex items-center gap-3 cursor-pointer group leading-none h-10 pointer-events-auto"
-                onClick={() => { 
+                onMouseEnter={() => setIsLogoHovered(true)}
+                onMouseLeave={() => setIsLogoHovered(false)}
+                onClick={() => {
                   navigate('/');
                 }}
               >
-                <svg className="h-10 w-auto drop-shadow-sm" viewBox="0 0 632 592" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="361" y="78" width="247" height="437" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
-                  <path d="M0 59L361 2C361 232.019 361 360.981 361 591L0 534V59Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="342" y="515" width="285" height="19" rx="9.5" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="342" y="59" width="285" height="19" rx="9.5" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="475" y="116" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="475" y="268" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="475" y="420" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="475" y="344" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="475" y="192" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <path d="M361 116H456V173H361V116Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="361" y="420" width="95" height="57" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <path d="M608 68.5C608 63.2533 612.253 59 617.5 59C622.747 59 627 63.2533 627 68.5V524.5C627 529.747 622.747 534 617.5 534C612.253 534 608 529.747 608 524.5V68.5Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <rect x="266" y="173" width="190" height="247" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
-                  <ellipse cx="202" cy="360.5" rx="25" ry="28.5" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
-                  <ellipse cx="202" cy="232.5" rx="25" ry="28.5" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
-                  <path d="M114 282L266 268V325L114 311V282Z" fill={isDarkModeActive ? '#1c1c1e' : 'white'}/>
-                  <path d="M329.234 192V401H289.223V226.505H266V192H329.234Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                  <path d="M386.33 192H420.466C444.155 192 456 204.049 456 228.148V364.524C456 388.841 444.155 401 420.466 401H388.009C364.32 401 352.475 388.841 352.475 364.524V337.577H391.367V358.28C391.367 363.757 393.885 366.495 398.921 366.495H409.554C414.403 366.495 416.828 363.757 416.828 358.28V318.517H386.33C362.641 318.517 350.796 306.468 350.796 282.369V228.148C350.796 204.049 362.641 192 386.33 192ZM397.522 286.313H416.828V234.72C416.828 229.243 414.403 226.505 409.554 226.505H397.522C392.486 226.505 389.968 229.243 389.968 234.72V278.097C389.968 281.165 390.527 283.355 391.647 284.67C392.766 285.765 394.724 286.313 397.522 286.313Z" className={`${isDarkModeActive ? 'fill-white group-hover:fill-[#1a73e8]' : 'fill-[#1F7144] group-hover:fill-black'} transition-colors duration-300`}/>
-                </svg>
+                <AnimatedLogo className="h-10 w-auto drop-shadow-sm" isDark={isDarkModeActive} active={isLogoHovered} />
                 {!viewingBlog && (
                   <h1 className={`text-xl font-bold tracking-tight ${isDarkModeActive ? 'text-white group-hover:text-[#1a73e8]' : 'text-[#1F7144] group-hover:text-black'} transition-colors duration-300 hidden sm:block leading-none`}>teslimolan.com</h1>
                 )}
