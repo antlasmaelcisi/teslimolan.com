@@ -62,7 +62,9 @@ body.dark div[class*="sites-button-"] {
     radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.08) 0%, transparent 50%) !important;
   background-attachment: fixed !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(30px);
+  /* Kutuların arkası düz siyah: bulanıklık görünmez ama kaydırırken (özellikle mobilde) pahalıdır */
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 body.dark table:not(.bg-transparent) td {
